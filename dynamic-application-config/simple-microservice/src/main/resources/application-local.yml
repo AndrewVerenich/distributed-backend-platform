@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: simple-service
+server:
+  port: 8080
+dynamic-config:
+  enabled: true
+  bootstrap-servers: localhost:9092
+  topic: config-state
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,dynamic-config
