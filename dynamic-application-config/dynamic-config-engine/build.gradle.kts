@@ -1,5 +1,12 @@
 plugins {
-  id("java")
+  kotlin("jvm")
+  kotlin("plugin.spring")
+  id("org.springframework.boot")
+  id("io.spring.dependency-management")
+}
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
@@ -7,10 +14,9 @@ repositories {
 }
 
 dependencies {
-  testImplementation(platform("org.junit:junit-bom:5.10.0"))
-  testImplementation("org.junit.jupiter:junit-jupiter")
-}
-
-tasks.test {
-  useJUnitPlatform()
+  implementation("org.springframework.boot:spring-boot-starter")
+  implementation("org.springframework.boot:spring-boot-starter-web")
+  implementation("org.springframework.kafka:spring-kafka")
+  implementation("org.apache.kafka:kafka-streams")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
 }

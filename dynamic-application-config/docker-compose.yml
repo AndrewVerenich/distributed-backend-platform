@@ -1,6 +1,76 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    command: postgres -c wal_level=logical
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: master
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U demo -d master" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  configs-fill:
+    image: postgres:15
+    depends_on:
+      debezium-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: master
+      PGPASSWORD: demo
+    volumes:
+      - ./postgres/insert.sql:/docker-entrypoint-initdb.d/insert.sql
+    entrypoint: [ "psql", "-h", "postgres", "-U", "demo", "-d", "master", "-f", "/docker-entrypoint-initdb.d/insert.sql" ]
+
+  debezium:
+    image: debezium/connect:2.5
+    container_name: debezium
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: debezium_configs
+      OFFSET_STORAGE_TOPIC: debezium_offsets
+      STATUS_STORAGE_TOPIC: debezium_status
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER_SCHEMAS_ENABLE: false
+      KEY_CONVERTER_SCHEMAS_ENABLE: false
+      PLUGIN_PATH: /kafka/connect
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/connectors || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  debezium-init:
+    image: curlimages/curl:8.5.0
+    depends_on:
+      debezium:
+        condition: service_healthy
+    volumes:
+      - ./debezium/init-debezium.sh:/init-debezium.sh
+    entrypoint: [ "sh", "/init-debezium.sh" ]
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     environment:
@@ -57,13 +127,21 @@ services:
     environment:
       - KAFKA_BROKERS=kafka:9092
 
+  dynamic-config-engine:
+    build:
+      context: ./dynamic-config-engine
+    depends_on:
+      debezium-init:
+        condition: service_completed_successfully
+    restart: on-failure
+
   simple-microservice-1:
     build:
       context: ./simple-microservice
     ports: [ "9001:8080" ]
     depends_on:
-      init-kafka:
-        condition: service_completed_successfully
+      dynamic-config-engine:
+        condition: service_started
     restart: on-failure
 
   simple-microservice-2:
@@ -71,6 +149,6 @@ services:
       context: ./simple-microservice
     ports: [ "9002:8080" ]
     depends_on:
-      init-kafka:
-        condition: service_completed_successfully
+      dynamic-config-engine:
+        condition: service_started
     restart: on-failure

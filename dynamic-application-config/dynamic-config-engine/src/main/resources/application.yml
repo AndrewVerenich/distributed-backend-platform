@@ -1,0 +1,10 @@
+dynamic-config:
+  topic: config-state
+  debezium-topic: configs.public.business_configs
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+    streams:
+      application-id: configs-engine-app
+      default-key-serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      default-value-serde: org.apache.kafka.common.serialization.Serdes$StringSerde
