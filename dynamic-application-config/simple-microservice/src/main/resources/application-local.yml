@@ -1,12 +1,15 @@
 spring:
   application:
     name: simple-service
+  kafka:
+    bootstrap-servers: localhost:9092
 server:
   port: 8080
 dynamic-config:
   enabled: true
   bootstrap-servers: localhost:9092
   topic: config-state
+  snapshot-topic: config-snapshot
 management:
   endpoints:
     web:

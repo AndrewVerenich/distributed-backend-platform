@@ -3,21 +3,12 @@ package com.andver.dynamicconfig.consumer
 import com.andver.dynamicconfig.storage.DefaultDynamicConfigStorage
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.kafka.annotation.KafkaListener
-import org.springframework.stereotype.Component
 
-@Component
-@ConditionalOnProperty(
-  prefix = "dynamic-config",
-  name = ["enabled"],
-  havingValue = "true",
-  matchIfMissing = false
-)
-internal class KafkaConsumer(
+class ConfigChangeConsumer(
   private val storage: DefaultDynamicConfigStorage,
 ) {
-  private val log = LoggerFactory.getLogger(KafkaConsumer::class.java)
+  private val log = LoggerFactory.getLogger(ConfigChangeConsumer::class.java)
 
   @KafkaListener(
     topics = ["\${dynamic-config.topic}"],

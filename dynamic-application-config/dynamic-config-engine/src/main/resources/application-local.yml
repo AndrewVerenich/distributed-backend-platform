@@ -1,10 +1,17 @@
 dynamic-config:
   topic: config-state
   debezium-topic: configs.public.business_configs
+  analyze-consistency-enabled: false
+  snapshot-topic: config-snapshot
+  window-seconds: 30
+  alerts-topic: config-consistency-alerts
 spring:
+  application:
+    name: dynamic-config-engine
   kafka:
     bootstrap-servers: localhost:9092
     streams:
       application-id: configs-engine-app
-      default-key-serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-      default-value-serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde

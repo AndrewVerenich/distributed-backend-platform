@@ -109,14 +109,19 @@ services:
       kafka:
         condition: service_healthy
     command: bash -c "
-      kafka-topics --create
-      --bootstrap-server kafka:9092
-      --topic config-state
-      --partitions 1
-      --replication-factor 1
-      --config segment.ms=1000
-      --config min.cleanable.dirty.ratio=0.01
-      --config cleanup.policy=compact"
+      kafka-topics --create \
+      --bootstrap-server kafka:9092 \
+      --topic config-state \
+      --partitions 1 \
+      --replication-factor 1 \
+      --config segment.ms=1000 \
+      --config min.cleanable.dirty.ratio=0.01 \
+      --config cleanup.policy=compact && \
+      kafka-topics --create \
+      --bootstrap-server kafka:9092 \
+      --topic config-snapshot \
+      --partitions 1 \
+      --replication-factor 1"
 
   kafka-ui:
     image: redpandadata/console:v3.3.1
