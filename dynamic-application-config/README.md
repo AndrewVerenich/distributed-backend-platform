@@ -198,7 +198,6 @@ dynamic-application-config-simple-microservice-2-1: Updated config with key:disc
 dynamic-application-config-simple-microservice-1-1: Updated config with key:discount_rate and value:0.15
 ```
 ### 6. Проверка алертов несогласованного состояния
-Обновление в базе данных
 ```bash
 docker exec -it kafka kafka-console-consumer \
   --bootstrap-server kafka:9092 \
