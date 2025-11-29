@@ -27,11 +27,11 @@ Postgres -> Debezium (CDC) -> Kafka -> Engine (Kafka Streams) -> Kafka -> Micros
 flowchart LR
     Postgres[(PostgreSQL)] --> Debezium[Debezium CDC]
     Debezium --> Kafka[(Kafka)]
-    Kafka --> Engine[Dynamic Config Engine]
+    Kafka --> Engine[dynamic-config-engine]
     Engine --> KafkaState[(config-state topic)]
     Engine --> KafkaAlerts[(config-consistency-alerts topic)]
-    KafkaState --> Microservice1[Microservice Instance 1]
-    KafkaState --> Microservice2[Microservice Instance 2]
+    KafkaState --> Microservice1[simple-microservice-instance-1]
+    KafkaState --> Microservice2[simple-microservice-instance-2]
     KafkaAlerts --> Monitoring[Grafana/Prometheus]
 ```
 ---
