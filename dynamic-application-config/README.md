@@ -22,7 +22,18 @@ Postgres -> Debezium (CDC) -> Kafka -> Engine (Kafka Streams) -> Kafka -> Micros
 - Внедряем механизм **state replay** для восстановления состояния после перезапуска.
 - Добавляем модуль **consistency analysis**, который выявляет рассинхронизацию и публикует алерты в отдельный топик для мониторинга.
 - Spring Boot Starter для автоматической интеграции динамических конфигураций.
-
+- 
+```mermaid
+flowchart LR
+    Postgres[(PostgreSQL)] --> Debezium[Debezium CDC]
+    Debezium --> Kafka[(Kafka)]
+    Kafka --> Engine[Dynamic Config Engine]
+    Engine --> KafkaState[(config-state topic)]
+    Engine --> KafkaAlerts[(config-consistency-alerts topic)]
+    KafkaState --> Microservice1[Microservice Instance 1]
+    KafkaState --> Microservice2[Microservice Instance 2]
+    KafkaAlerts --> Monitoring[Grafana/Prometheus]
+```
 ---
 # Компоненты
 
