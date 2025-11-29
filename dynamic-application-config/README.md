@@ -15,7 +15,6 @@
 ---
 
 ### 🎯 Решение
-Postgres -> Debezium (CDC) -> Kafka -> Engine (Kafka Streams) -> Kafka -> Microservices
 - Хранения конфигураций в PostgreSQL,
 - Реализуем **real‑time propagation** конфигураций через Kafka и Debezium.
 - Обеспечиваем **eventual consistency** между всеми узлами за счёт compact‑топиков.
