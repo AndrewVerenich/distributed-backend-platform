@@ -1,0 +1,11 @@
+views:
+  topic: product-view
+  user-count: 10
+  category-count: 10
+  product-count: 100
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
