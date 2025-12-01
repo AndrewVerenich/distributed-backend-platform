@@ -1,6 +1,8 @@
 product-view:
   topic: product-view
   count-topic: product-view-counts
+  window: PT1H
+  threshold: 10
 spring:
   kafka:
     bootstrap-servers: localhost:9092
