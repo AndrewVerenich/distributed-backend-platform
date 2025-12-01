@@ -1,0 +1,11 @@
+product-view:
+  topic: product-view
+  count-topic: product-view-counts
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    streams:
+      application-id: trends-analyzer
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$LongSerde
+        default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
