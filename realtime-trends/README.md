@@ -38,7 +38,7 @@ flowchart LR
     TrendsAnalyzer1 --> product-view-counts[(product-view-counts topic)]
     TrendsAnalyzer2 --> product-view-counts
     product-view-counts --> ksqlDB[(ksqlDB)]
-    Postgres[(PostgreSQL)] --> ProductService
+    Postgres[(PostgreSQL)] --> ProductService[product-service]
     ksqlDB --> ProductService
     ProductService --> API[/REST API: /trendy-products?userId=.../]
 ```
