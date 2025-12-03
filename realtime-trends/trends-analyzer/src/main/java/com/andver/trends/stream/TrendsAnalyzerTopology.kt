@@ -1,4 +1,4 @@
-package com.andver.order.stream
+package com.andver.trends.stream
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue

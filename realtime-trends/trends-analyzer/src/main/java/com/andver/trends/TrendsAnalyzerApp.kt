@@ -1,4 +1,4 @@
-package com.andver.order
+package com.andver.trends
 
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication

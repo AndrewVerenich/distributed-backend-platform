@@ -5,6 +5,7 @@ import com.andver.order.model.TrendyProduct
 import com.andver.order.repository.UserPreferenceRepository
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
+import java.time.Duration
 
 interface ProductService {
   fun getTrendyProducts(userId: Long): Flux<TrendyProduct>
@@ -20,7 +21,7 @@ class DefaultProductService(
       .collectList()
       .flatMapMany { categories ->
         if (categories.isEmpty()) Flux.empty()
-        else ksqlDbClient.getTrendyProducts(categories)
+        else ksqlDbClient.getTrendyProducts(categories, Duration.ofHours(1))
       }
   }
 }

@@ -8,10 +8,13 @@ import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
+import java.time.Duration
 
 interface KsqlDbClient {
-  fun getTrendyProducts(categoryIds: List<Long>): Flux<TrendyProduct>
+  fun getTrendyProducts(categoryIds: List<Long>, of: Duration): Flux<TrendyProduct>
 }
+
+private const val CONTENT_TYPE = "application/vnd.ksql.v1+json; charset=utf-8"
 
 @Component
 class DefaultKsqlDbClient(
@@ -22,28 +25,30 @@ class DefaultKsqlDbClient(
 
   private val client = builder.baseUrl(url).build()
 
-  override fun getTrendyProducts(categoryIds: List<Long>): Flux<TrendyProduct> {
+  override fun getTrendyProducts(categoryIds: List<Long>, of: Duration): Flux<TrendyProduct> {
     val categories = categoryIds.joinToString(",")
     val sql = """
-            SELECT productId, categoryId, views, ts
+            SELECT productId, categoryId
             FROM QUERYABLE_PRODUCT_VIEW_COUNTS
             WHERE categoryId IN ($categories)
-            AND ts > UNIX_TIMESTAMP() - 3600000 
+            AND ts > UNIX_TIMESTAMP() - ${of.toMillis()} 
             LIMIT 10;
         """.trimIndent()
 
     return client.post()
       .uri("/query")
-      .header("Content-Type", "application/vnd.ksql.v1+json; charset=utf-8")
+      .header("Content-Type", CONTENT_TYPE)
       .bodyValue(mapOf("ksql" to sql))
       .retrieve()
       .bodyToFlux(String::class.java)
       .flatMap { line ->
         if (line.startsWith("{")) Mono.empty()
         else {
-          val arr: Array<Long> = objectMapper.readValue(line, Array<Long>::class.java)
-          TrendyProduct(arr[0], arr[1], arr[2], arr[3]).toMono()
+          buildProduct(objectMapper.readValue(line, Array<Long>::class.java))
         }
       }
   }
+
+  private fun buildProduct(arr: Array<Long>): Mono<TrendyProduct> =
+    TrendyProduct(arr[0], arr[1]).toMono()
 }
