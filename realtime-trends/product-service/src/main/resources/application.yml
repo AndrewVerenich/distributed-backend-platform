@@ -1,0 +1,10 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://postgres:5432/master
+    username: demo
+    password: demo
+  datasource:
+    driver-class-name: org.postgresql.Driver
+client:
+  ksqldb:
+    url: http://ksqldb-server:9090

@@ -97,6 +97,31 @@ services:
       - ./ksql/init.sh:/init.sh
     entrypoint: sh /init.sh
 
-  
-  
-  
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    command: postgres -c wal_level=logical
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: master
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U demo -d master" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  product-service:
+    build:
+      context: ./product-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
