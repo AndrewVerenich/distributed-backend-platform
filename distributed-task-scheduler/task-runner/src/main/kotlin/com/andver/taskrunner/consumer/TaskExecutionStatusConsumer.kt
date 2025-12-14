@@ -12,7 +12,7 @@ class TaskExecutionStatusConsumer(
 ) {
   private val log = LoggerFactory.getLogger(TaskExecutionStatusConsumer::class.java)
 
-  @KafkaListener(topics = ["task-execution-status"])
+  @KafkaListener(topics = ["\${scheduler.status-topic}"])
   fun consume(message: TaskExecutionStatusMessage) {
     taskExecutionHandler.update(message.uuid, message.status)
       .doOnError { e -> log.error("Error while consuming record=$message", e) }

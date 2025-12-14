@@ -1,3 +1,5 @@
+server:
+  port: 9090
 spring:
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/master
@@ -18,9 +20,10 @@ spring:
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.value.default.type: com.andver.taskrunner.model.TaskExecutionStatusMessage
-        spring.json.trusted.packages: com.andver.taskrunner.model
+        spring.json.trusted.packages: "*"
 scheduler:
   pool-size: 4
+  status-topic: task-execution-status
   tasks:
     blockInactiveUsers:
       cron: "*/10 * * * * ?"

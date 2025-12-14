@@ -11,4 +11,7 @@ include(
   "realtime-trends:product-service",
 
   "distributed-task-scheduler:task-runner",
+  "distributed-task-scheduler:task-starter",
+  "distributed-task-scheduler:simple-user-microservice",
+  "distributed-task-scheduler:simple-order-microservice",
 )
