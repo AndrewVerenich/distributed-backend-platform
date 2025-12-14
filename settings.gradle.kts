@@ -9,4 +9,6 @@ include(
   "realtime-trends:product-view-generator",
   "realtime-trends:trends-analyzer",
   "realtime-trends:product-service",
+
+  "distributed-task-scheduler:task-runner",
 )
