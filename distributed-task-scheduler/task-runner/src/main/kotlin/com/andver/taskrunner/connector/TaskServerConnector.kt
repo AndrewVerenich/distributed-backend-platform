@@ -17,7 +17,7 @@ class WebClientComponentConnector(
 
   override fun runTask(component: String, params: RunTaskParams): Mono<Void> {
     return webClient.post()
-      .uri("http://$component/scheduled-task/run")
+      .uri("http://$component:8080/scheduled-task/run")
       .contentType(MediaType.APPLICATION_JSON)
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(params)

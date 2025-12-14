@@ -76,7 +76,7 @@ services:
   task-runner:
     build:
       context: ./task-runner
-    ports: [ "9001:8080" ]
+    ports: [ "9090:9090" ]
     depends_on:
       init-kafka:
         condition: service_completed_successfully
@@ -84,5 +84,31 @@ services:
         condition: service_healthy
     environment:
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/master
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    restart: on-failure
+
+  simple-user-microservice:
+    build:
+      context: ./simple-user-microservice
+    hostname: user-service
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    restart: on-failure
+
+  simple-order-microservice:
+    build:
+      context: ./simple-order-microservice
+    hostname: order-service
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     restart: on-failure
