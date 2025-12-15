@@ -26,7 +26,7 @@ class BlockInactiveUsersTask : Task {
   override fun execute(param: Map<String, Any>): Mono<Void> {
     logger.info("Block inactive users with params = $param")
     // business logic
-    return Mono.delay(Duration.ofSeconds(3))
+    return Mono.delay(Duration.ofSeconds(15))
       .then()
   }
 }
