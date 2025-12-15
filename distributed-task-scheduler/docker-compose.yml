@@ -73,6 +73,13 @@ services:
     environment:
       - KAFKA_BROKERS=kafka:9092
 
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
   task-runner:
     build:
       context: ./task-runner
@@ -98,6 +105,7 @@ services:
         condition: service_healthy
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_REDIS_HOST: redis
     restart: on-failure
 
   simple-order-microservice:
@@ -111,4 +119,5 @@ services:
         condition: service_healthy
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_REDIS_HOST: redis
     restart: on-failure

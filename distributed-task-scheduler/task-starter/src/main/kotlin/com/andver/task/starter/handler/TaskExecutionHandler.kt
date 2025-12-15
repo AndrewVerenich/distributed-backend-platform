@@ -7,9 +7,9 @@ import com.andver.task.starter.model.TaskStatus.FINISHED
 import com.andver.task.starter.model.TaskStatus.IN_PROGRESS
 import com.andver.task.starter.model.TaskStatus.SKIPPED
 import com.andver.task.starter.producer.TaskStatusProducer
+import org.redisson.api.RedissonReactiveClient
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
-import java.util.concurrent.atomic.AtomicBoolean
 
 interface TaskExecutionHandler {
   fun executeTaskAsync(runTaskParams: RunTaskParams): Mono<Void>
@@ -19,32 +19,44 @@ interface TaskExecutionHandler {
 class DefaultTaskExecutionHandler(
   override val task: Task,
   private val taskStatusProducer: TaskStatusProducer,
+  private val redissonClient: RedissonReactiveClient
 ) : TaskExecutionHandler {
-  private val executed = AtomicBoolean(false)
   private val logger = LoggerFactory.getLogger(DefaultTaskExecutionHandler::class.java)
 
   override fun executeTaskAsync(runTaskParams: RunTaskParams): Mono<Void> {
-    if (executed.compareAndSet(false, true)) {
-      task.execute(param = runTaskParams.params)
-        .doOnSubscribe {
-          logger.info("Starting ${task.taskName} task")
-          taskStatusProducer.sendStatus(status = IN_PROGRESS, uuid = runTaskParams.uuid)
+    val lock = redissonClient.getLock("task:${runTaskParams.name}")
+    Mono.usingWhen(
+      lock.tryLock(),
+      { isLockAcquired ->
+        if (isLockAcquired) {
+          task.execute(runTaskParams.params)
+            .doOnSubscribe {
+              logger.info("Starting ${task.taskName} task")
+              taskStatusProducer.sendStatus(IN_PROGRESS, runTaskParams.uuid)
+            }
+            .doOnSuccess {
+              logger.info("Task ${task.taskName} finished")
+              taskStatusProducer.sendStatus(FINISHED, runTaskParams.uuid)
+            }
+            .doOnError {
+              logger.error("Task ${task.taskName} failed", it)
+              taskStatusProducer.sendStatus(ERROR, runTaskParams.uuid)
+            }
+        } else {
+          Mono.fromCallable {
+            taskStatusProducer.sendStatus(SKIPPED, runTaskParams.uuid)
+            logger.warn("Task {} is already executed", task.taskName)
+          }
         }
-        .doOnSuccess {
-          logger.info("Task ${task.taskName} finished")
-          taskStatusProducer.sendStatus(status = FINISHED, uuid = runTaskParams.uuid)
-        }
-        .doOnError {
-          logger.error("Task ${task.taskName} failed", it)
-          taskStatusProducer.sendStatus(status = ERROR, uuid = runTaskParams.uuid)
-        }
-        .doFinally { executed.set(false) }
-        .subscribeOn(task.scheduler)
-        .subscribe()
-    } else {
-      taskStatusProducer.sendStatus(status = SKIPPED, uuid = runTaskParams.uuid)
-      logger.warn("Task {} is already executed", task.taskName)
-    }
+      },
+      { isLockAcquired -> if (isLockAcquired) lock.forceUnlock() else Mono.empty<Boolean>() }
+    )
+      .doOnError {
+        logger.error("Task ${task.taskName} failed", it)
+        taskStatusProducer.sendStatus(ERROR, runTaskParams.uuid)
+      }
+      .subscribeOn(task.scheduler)
+      .subscribe()
     return Mono.empty()
   }
 }

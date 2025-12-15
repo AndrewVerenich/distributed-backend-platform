@@ -9,6 +9,9 @@ import com.andver.task.starter.model.Task
 import com.andver.task.starter.model.TaskExecutionStatusMessage
 import com.andver.task.starter.producer.DefaultTaskStatusProducer
 import com.andver.task.starter.producer.TaskStatusProducer
+import org.redisson.Redisson
+import org.redisson.api.RedissonReactiveClient
+import org.redisson.config.Config
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
@@ -44,8 +47,9 @@ class TaskAutoConfiguration(
   fun taskExecutionHandlers(
     tasks: List<Task>? = emptyList(),
     taskStatusProducer: TaskStatusProducer,
+    redissonClient: RedissonReactiveClient,
   ): List<TaskExecutionHandler> {
-    return tasks?.map { task -> DefaultTaskExecutionHandler(task, taskStatusProducer) } ?: emptyList()
+    return tasks?.map { task -> DefaultTaskExecutionHandler(task, taskStatusProducer, redissonClient) } ?: emptyList()
   }
 
   @Bean
@@ -59,5 +63,16 @@ class TaskAutoConfiguration(
   @Bean
   fun taskController(taskDispatcher: TaskDispatcher): TaskController {
     return TaskController(taskDispatcher)
+  }
+
+  @Bean(destroyMethod = "shutdown")
+  fun redissonClient(
+    @Value("\${spring.data.redis.host:localhost}") redisHost: String,
+    @Value("\${spring.data.redis.port:6379}") redisPort: Int
+  ): RedissonReactiveClient {
+    return Config().also { config ->
+      config.useSingleServer()
+        .setAddress("redis://$redisHost:$redisPort")
+    }.let { Redisson.create(it).reactive() }
   }
 }
