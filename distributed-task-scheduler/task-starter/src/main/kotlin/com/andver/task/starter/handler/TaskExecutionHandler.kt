@@ -10,11 +10,15 @@ import com.andver.task.starter.producer.TaskStatusProducer
 import org.redisson.api.RedissonReactiveClient
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
+import java.util.concurrent.TimeUnit
 
 interface TaskExecutionHandler {
   fun executeTaskAsync(runTaskParams: RunTaskParams): Mono<Void>
   val task: Task
 }
+
+private const val WAIT_LOCK_DURATION = 5L
+private const val LEASE_LOCK_DURATION = 10L
 
 class DefaultTaskExecutionHandler(
   override val task: Task,
@@ -26,7 +30,7 @@ class DefaultTaskExecutionHandler(
   override fun executeTaskAsync(runTaskParams: RunTaskParams): Mono<Void> {
     val lock = redissonClient.getLock("task:${runTaskParams.name}")
     Mono.usingWhen(
-      lock.tryLock(),
+      lock.tryLock(WAIT_LOCK_DURATION, LEASE_LOCK_DURATION, TimeUnit.SECONDS),
       { isLockAcquired ->
         if (isLockAcquired) {
           task.execute(runTaskParams.params)
