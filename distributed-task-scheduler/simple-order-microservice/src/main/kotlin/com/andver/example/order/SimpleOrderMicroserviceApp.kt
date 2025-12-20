@@ -11,10 +11,10 @@ import reactor.core.scheduler.Schedulers
 import java.time.Duration
 
 @SpringBootApplication
-class SimpleUserMicroserviceApp
+class SimpleOrderMicroserviceApp
 
 fun main(args: Array<String>) {
-  SpringApplication.run(SimpleUserMicroserviceApp::class.java, *args)
+  SpringApplication.run(SimpleOrderMicroserviceApp::class.java, *args)
 }
 
 @Component
