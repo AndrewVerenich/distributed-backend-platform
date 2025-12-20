@@ -37,3 +37,23 @@
 - ksqlDB
 - PostgreSQL
 - Docker Compose
+
+---
+
+### 3. [distributed-task-scheduler](./distributed-task-scheduler/README.md)
+Реализация распределённой системы планирования задач по расписанию для микросервисной архитектуры.
+
+**Описание:**
+- Централизованный оркестратор задач (task-runner) с cron-планированием.
+- Spring Boot Starter для автоматической интеграции в микросервисы.
+- Распределённые блокировки через Redis (Redisson) для предотвращения дублирования.
+- Асинхронная передача статусов выполнения через Kafka.
+- Хранение истории выполнения задач в PostgreSQL.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Kafka
+- Redisson (Redis)
+- PostgreSQL
+- Docker Compose
