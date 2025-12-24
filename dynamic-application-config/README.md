@@ -214,3 +214,59 @@ docker exec -it kafka kafka-console-consumer \
   --topic config-consistency-alerts \
   --from-beginning
 ```
+
+---
+
+## 📦 Структура проекта
+
+```
+dynamic-application-config/
+├── dynamic-config-starter/          # Spring Boot Starter для интеграции динамических конфигураций
+│   ├── src/main/kotlin/
+│   │   └── com/andver/dynamicconfig/
+│   │       ├── DynamicConfigAutoConfiguration.kt
+│   │       ├── actuator/
+│   │       │   └── ConfigEndpoint.kt
+│   │       ├── consumer/
+│   │       │   └── ConfigChangeConsumer.kt
+│   │       ├── producer/
+│   │       │   └── ConfigStateProducer.kt
+│   │       ├── properties/
+│   │       │   └── DynamicConfigProperties.kt
+│   │       └── storage/
+│   │           └── DynamicConfigStorage.kt
+│   ├── src/main/resources/
+│   │   └── META-INF/spring/
+│   │       └── org.springframework.boot.autoconfigure.AutoConfiguration.imports
+│   └── build.gradle.kts
+├── dynamic-config-engine/           # Сервис для обработки CDC событий и анализа консистентности
+│   ├── src/main/kotlin/
+│   │   └── com/andver/dynamicconfig/engine/
+│   │       ├── DynamicConfigEngineApp.kt
+│   │       ├── properties/
+│   │       │   └── DynamicConfigEngineProperties.kt
+│   │       └── stream/
+│   │           ├── DebeziumStreamConfig.kt
+│   │           └── ConsistencyAnalyzerConfig.kt
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── application-local.yml
+│   ├── build.gradle.kts
+│   └── Dockerfile
+├── simple-microservice/              # Тестовый микросервис для демонстрации
+│   ├── src/main/kotlin/
+│   │   └── com/andver/example/component/
+│   │       └── SimpleMicroserviceApp.kt
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── application-local.yml
+│   ├── build.gradle.kts
+│   └── Dockerfile
+├── debezium/
+│   └── init-debezium.sh             # Инициализация Debezium коннектора
+├── postgres/
+│   ├── init.sql                     # Схема БД для хранения конфигураций
+│   └── insert.sql                   # Начальные данные конфигураций
+├── docker-compose.yml
+└── README.md
+```
