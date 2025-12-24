@@ -20,7 +20,28 @@
 
 ---
 
-### 2. [realtime-trends](./realtime-trends/README.md)
+### 2. [cdc-application-events-engine](./cdc-application-events-engine/README.md)
+Реализация event-driven архитектуры на основе Change Data Capture (CDC) для обеспечения согласованности данных между микросервисами без использования распределённых транзакций.
+
+**Описание:**
+- CDC через Debezium для отслеживания изменений в MySQL.
+- Трансформация и маршрутизация событий через Apache Camel YAML DSL.
+- Декларативные маршруты для обработки бизнес-событий (user, credit, payment).
+- Разделение Debezium событий и доменных событий через разные Kafka компоненты.
+- Eventual consistency вместо распределённых транзакций (2PC/Saga).
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3
+- Apache Camel 4.4 (YAML DSL)
+- Debezium 2.5
+- Apache Kafka
+- MySQL 8.0
+- Docker Compose
+
+---
+
+### 3. [realtime-trends](./realtime-trends/README.md)
 Реализация рекомендательной системы с персонализацией и анализом трендов в реальном времени.
 
 **Описание:**
@@ -40,7 +61,7 @@
 
 ---
 
-### 3. [distributed-task-scheduler](./distributed-task-scheduler/README.md)
+### 4. [distributed-task-scheduler](./distributed-task-scheduler/README.md)
 Реализация распределённой системы планирования задач по расписанию для микросервисной архитектуры.
 
 **Описание:**
