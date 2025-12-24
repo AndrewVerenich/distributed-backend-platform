@@ -1,0 +1,16 @@
+- from:
+    id: user-block-route
+    uri: "debeziumKafka:debezium.master.user?groupId=user-block-route"
+    steps:
+      - filter:
+          simple: "${body.op} == 'UPDATE' && ${body.updatedFields.containsKey('is_blocked')}"
+      - log:
+          message: "User block change id=${body.after[id]}, blocked=${body.after[is_blocked]}"
+      - setHeader:
+          name: Kafka.KEY
+          simple: "${body.after[id]}"
+      - setBody:
+          simple: |
+            {"userId":${body.after[id]},"blocked":"${body.after[is_blocked]}"}
+      - to:
+          uri: "domainKafka:user-block"

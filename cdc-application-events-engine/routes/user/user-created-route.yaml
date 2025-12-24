@@ -1,0 +1,17 @@
+- from:
+    id: user-created-route
+    uri: "debeziumKafka:debezium.master.user?groupId=user-created-route"
+    steps:
+      - filter:
+          simple: "${body.op} == 'CREATE'"
+      - log:
+          message: "Created user with id=${body.after[id]}, name=${body.after[name]}, email=${body.after[email]}"
+      - setHeader:
+          name: Kafka.KEY
+          simple: "${body.after[id]}"
+      - setBody:
+          simple: |
+            {"userId":${body.after[id]},"email":"${body.after[email]}"}
+      - to:
+          uri: "domainKafka:user-created"
+

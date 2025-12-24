@@ -14,4 +14,6 @@ include(
   "distributed-task-scheduler:task-starter",
   "distributed-task-scheduler:simple-user-microservice",
   "distributed-task-scheduler:simple-order-microservice",
+
+  "cdc-application-events-engine:application-events-handler",
 )

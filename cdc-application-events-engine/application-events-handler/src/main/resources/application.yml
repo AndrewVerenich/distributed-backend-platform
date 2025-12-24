@@ -1,0 +1,11 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  kafka:
+    bootstrap-servers: localhost:9092
+camel:
+  springboot:
+    routes-collector-enabled: true
+    main-run-controller: true
+    routes-include-pattern: classpath:*.yaml
+

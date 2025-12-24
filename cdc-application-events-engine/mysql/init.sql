@@ -1,0 +1,31 @@
+CREATE USER 'debezium'@'%' IDENTIFIED BY 'debezium';
+GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'debezium'@'%';
+FLUSH PRIVILEGES;
+
+CREATE TABLE user(
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(255) NOT NULL,
+    email        VARCHAR(255) NOT NULL UNIQUE,
+    phone_number VARCHAR(50),
+    address      VARCHAR(255),
+    is_blocked   BOOLEAN DEFAULT FALSE,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE credit (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    status ENUM('DRAFT', 'ACTIVE', 'EXPIRED', 'CANCELLED') NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE payment (
+     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+     credit_id BIGINT NOT NULL,
+     payment_date DATE NOT NULL,
+     amount DECIMAL(15,2) NOT NULL,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

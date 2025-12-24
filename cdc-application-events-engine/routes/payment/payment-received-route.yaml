@@ -1,0 +1,16 @@
+- from:
+    id: payment-received-route
+    uri: "debeziumKafka:debezium.master.payment?groupId=payment-received-route"
+    steps:
+      - filter:
+          simple: "${body.op} == 'CREATE'"
+      - log:
+          message: "Payment received id=${body.after[id]}, creditId=${body.after[credit_id]}, amount=${body.after[amount]}"
+      - setHeader:
+          name: Kafka.KEY
+          simple: "${body.after[id]}"
+      - setBody:
+          simple: |
+            {"paymentId":${body.after[id]},"creditId":${body.after[credit_id]},"amount":"${body.after[amount]}"}
+      - to:
+          uri: "domainKafka:payment-received"
