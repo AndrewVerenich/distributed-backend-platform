@@ -1,0 +1,16 @@
+- from:
+    id: user-personal-data-change-route
+    uri: "debeziumKafka:debezium.master.user?groupId=user-personal-data-change-route"
+    steps:
+      - filter:
+          simple: "${body.op} == 'UPDATE' && ${body.updatedFields.containsKey('is_blocked')} == false"
+      - log:
+          message: "User updated id=${body.after[id]}, name=${body.after[name]}, email=${body.after[email]}, phone=${body.after[phone_number]}, address=${body.after[address]}"
+      - setHeader:
+          name: Kafka.KEY
+          simple: "${body.after[id]}"
+      - setBody:
+          simple: |
+            {"userId":"${body.after[id]}","name":"${body.after[name]}","email":"${body.after[email]}","phone":"${body.after[phone_number]}","address":"${body.after[address]}"}
+      - to:
+          uri: "domainKafka:user-personal-data-change"

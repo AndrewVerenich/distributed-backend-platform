@@ -1,0 +1,16 @@
+- from:
+    id: credit-expired-route
+    uri: "debeziumKafka:debezium.master.credit?groupId=credit-expired-route"
+    steps:
+      - filter:
+          simple: "${body.op} == 'UPDATE' && ${body.updatedFields.containsKey(status)} && ${body.after[status]} == 'EXPIRED'"
+      - log:
+          message: "Expired credit id=${body.after[id]}"
+      - setHeader:
+          name: Kafka.KEY
+          simple: "${body.after[id]}"
+      - setBody:
+          simple: |
+            {"creditId":${body.after[id]}}
+      - to:
+          uri: "domainKafka:credit-expired"

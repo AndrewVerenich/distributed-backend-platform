@@ -1,0 +1,16 @@
+- from:
+    id: credit-created-route
+    uri: "debeziumKafka:debezium.master.credit?groupId=credit-created-route"
+    steps:
+      - filter:
+          simple: "${body.op} == 'CREATE'"
+      - log:
+          message: "Created credit id=${body.after[id]}, userId=${body.after[user_id]}, amount=${body.after[amount]}"
+      - setHeader:
+          name: Kafka.KEY
+          simple: "${body.after[id]}"
+      - setBody:
+          simple: |
+            {"creditId":${body.after[id]},"userId":${body.after[user_id]},"amount":"${body.after[amount]}"}
+      - to:
+          uri: "domainKafka:credit-created"

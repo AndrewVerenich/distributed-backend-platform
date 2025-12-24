@@ -1,0 +1,16 @@
+- from:
+    id: credit-cancelled-route
+    uri: "debeziumKafka:debezium.master.credit?groupId=credit-cancelled-route"
+    steps:
+      - filter:
+          simple: "${body.op} == 'UPDATE' && ${body.updatedFields.containsKey(status)} && ${body.after[status]} == 'CANCELLED'"
+      - log:
+          message: "Cancelled credit id=${body.after[id]}"
+      - setHeader:
+          name: Kafka.KEY
+          simple: "${body.after[id]}"
+      - setBody:
+          simple: |
+            {"creditId":${body.after[id]}}
+      - to:
+          uri: "domainKafka:credit-cancelled"
