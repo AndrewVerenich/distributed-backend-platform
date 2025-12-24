@@ -307,3 +307,84 @@ docker-compose up -d --scale simple-user-microservice=2
 # В логах будет видно, что одна задача выполняется, а вторая получает статус SKIPPED
 ```
 
+---
+
+## 📦 Структура проекта
+
+```
+distributed-task-scheduler/
+├── task-runner/                      # Централизованный оркестратор задач
+│   ├── src/main/kotlin/
+│   │   └── com/andver/taskrunner/
+│   │       ├── TaskRunnerApp.kt
+│   │       ├── config/
+│   │       │   ├── ThreadPoolTaskSchedulerConfig.kt
+│   │       │   └── WebClientConfig.kt
+│   │       ├── connector/
+│   │       │   └── TaskServerConnector.kt
+│   │       ├── consumer/
+│   │       │   └── TaskExecutionStatusConsumer.kt
+│   │       ├── controller/
+│   │       │   └── ManualTaskRunnerController.kt
+│   │       ├── entity/
+│   │       │   └── TaskExecution.kt
+│   │       ├── handler/
+│   │       │   └── TaskExecutionHandler.kt
+│   │       ├── model/
+│   │       │   ├── RunTaskParams.kt
+│   │       │   └── TaskExecutionStatusMessage.kt
+│   │       ├── properties/
+│   │       │   └── TaskSettings.kt
+│   │       ├── repository/
+│   │       │   └── TaskExecutionRepository.kt
+│   │       ├── runner/
+│   │       │   └── TaskRunner.kt
+│   │       └── scheduler/
+│   │           └── TaskScheduler.kt
+│   ├── src/main/resources/
+│   │   └── application.yml
+│   └── build.gradle.kts
+├── task-starter/                     # Spring Boot Starter для интеграции в микросервисы
+│   ├── src/main/kotlin/
+│   │   └── com/andver/task/
+│   │       └── starter/
+│   │           ├── TaskAutoConfiguration.kt
+│   │           ├── controller/
+│   │           │   └── TaskController.kt
+│   │           ├── dispatcher/
+│   │           │   └── TaskDispatcher.kt
+│   │           ├── handler/
+│   │           │   └── TaskExecutionHandler.kt
+│   │           ├── model/
+│   │           │   ├── Task.kt
+│   │           │   ├── RunTaskParams.kt
+│   │           │   ├── TaskExecutionStatusMessage.kt
+│   │           │   └── TaskStatus.kt
+│   │           └── producer/
+│   │               └── TaskStatusProducer.kt
+│   ├── src/main/resources/
+│   │   └── META-INF/spring/
+│   │       └── org.springframework.boot.autoconfigure.AutoConfiguration.imports
+│   └── build.gradle.kts
+├── simple-user-microservice/         # Тестовый микросервис для демонстрации
+│   ├── src/main/kotlin/
+│   │   └── com/andver/example/user/
+│   │       └── SimpleUserMicroserviceApp.kt  # Содержит BlockInactiveUsersTask
+│   ├── src/main/resources/
+│   │   └── application.yml
+│   ├── build.gradle.kts
+│   └── Dockerfile
+├── simple-order-microservice/        # Тестовый микросервис для демонстрации
+│   ├── src/main/kotlin/
+│   │   └── com/andver/example/order/
+│   │       └── SimpleOrderMicroserviceApp.kt  # Содержит CheckOrderDeliveryTask
+│   ├── src/main/resources/
+│   │   └── application.yml
+│   ├── build.gradle.kts
+│   └── Dockerfile
+├── postgres/
+│   └── init.sql                      # Схема БД для хранения истории выполнения задач
+├── docker-compose.yml
+└── README.md
+```
+
