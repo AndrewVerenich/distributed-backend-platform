@@ -125,3 +125,64 @@ curl "http://localhost:8080/trendy-products?userId=1"
     }
 ]
 ```
+
+---
+
+## 📦 Структура проекта
+
+```
+realtime-trends/
+├── product-service/                  # REST сервис для получения персонализированных трендов
+│   ├── src/main/java/
+│   │   └── com/andver/order/
+│   │       ├── ProductServiceApp.kt
+│   │       ├── client/
+│   │       │   └── KsqlDbClient.kt
+│   │       ├── controller/
+│   │       │   └── ProductController.kt
+│   │       ├── model/
+│   │       │   ├── TrendyProduct.kt
+│   │       │   └── UserPreference.kt
+│   │       ├── repository/
+│   │       │   └── UserPreferenceRepository.kt
+│   │       └── service/
+│   │           └── ProductService.kt
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── application-local.yml
+│   ├── build.gradle.kts
+│   └── Dockerfile
+├── trends-analyzer/                  # Kafka Streams приложение для агрегации трендов
+│   ├── src/main/java/
+│   │   └── com/andver/trends/
+│   │       ├── TrendsAnalyzerApp.kt
+│   │       └── stream/
+│   │           └── TrendsAnalyzerTopology.kt
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── application-local.yml
+│   ├── build.gradle.kts
+│   └── Dockerfile
+├── product-view-generator/           # Генератор событий просмотров продуктов
+│   ├── src/main/java/
+│   │   └── com/andver/view/
+│   │       ├── ProductViewGeneratorApp.java
+│   │       ├── emulator/
+│   │       │   └── ProductViewEmulator.java
+│   │       ├── model/
+│   │       │   └── ProductViewEvent.java
+│   │       └── producer/
+│   │           ├── ProductViewProducer.java
+│   │           └── DefaultProductViewProducer.java
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── application-local.yml
+│   ├── build.gradle.kts
+│   └── Dockerfile
+├── ksql/
+│   └── init.sh                      # Инициализация ksqlDB запросов
+├── postgres/
+│   └── init.sql                     # Схема БД для хранения пользовательских предпочтений
+├── docker-compose.yml
+└── README.md
+```
