@@ -1,0 +1,5 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+topics: credit-cancelled,credit-created,credit-expired,payment-received,user-block,user-created,user-personal-data-change
+

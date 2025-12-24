@@ -155,3 +155,13 @@ services:
     volumes:
       - ./routes:/app/routes
     restart: on-failure
+
+  simple-notification-microservice:
+    build:
+      context: ./simple-notification-microservice
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    restart: on-failure
