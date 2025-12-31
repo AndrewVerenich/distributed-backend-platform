@@ -1,0 +1,11 @@
+websocket-gateway
+rsocket-gateway
+lock-manager
+saga-orchestrator
+time-service (Clock Skew Compensation — компенсация рассинхронизации времени)
+api-gateway, rate limiter, circuit breaker
+event-sourcing, cqrs
+A/B testing
+performance testing
+idempotency Service — защита от дублирования запросов
+distributed Deadlock Detection — обнаружение deadlock'ов
