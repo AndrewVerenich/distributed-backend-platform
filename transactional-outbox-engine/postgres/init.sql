@@ -8,8 +8,8 @@ CREATE TABLE outbox
     payload          JSONB        NOT NULL,
     idempotency_key  UUID         NOT NULL DEFAULT gen_random_uuid(),
     status           VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
-    created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    processed_at     TIMESTAMPTZ NULL
+    created_at       TIMESTAMP  NOT NULL DEFAULT NOW(),
+    processed_at     TIMESTAMP  NULL
 );
 
 CREATE UNIQUE INDEX idx_outbox_idempotency_key ON outbox (idempotency_key);
