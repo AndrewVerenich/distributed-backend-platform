@@ -17,4 +17,8 @@ include(
 
   "cdc-application-events-engine:application-events-handler",
   "cdc-application-events-engine:simple-notification-microservice",
+
+  "transactional-outbox-engine:outbox-model",
+  "transactional-outbox-engine:outbox-publisher-starter",
+  "transactional-outbox-engine:outbox-consumer-starter",
 )
