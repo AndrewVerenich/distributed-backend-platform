@@ -30,10 +30,6 @@ open class DefaultOutboxPublisher(
     payload: Any
   ): Mono<OutboxEvent> {
     log.debug("Publishing outbox event: type=$eventType, partitioningKey=$partitioningKey, payload=$payload")
-    return OutboxEvent(
-      partitioningKey = partitioningKey,
-      type = eventType,
-      payload = objectMapper.writeValueAsString(payload),
-    ).let { event -> repository.save(event) }
+    return repository.saveWithJsonb(partitioningKey, eventType, objectMapper.writeValueAsString(payload))
   }
 }

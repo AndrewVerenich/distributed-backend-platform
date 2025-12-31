@@ -7,13 +7,13 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import reactor.core.publisher.Mono
 
 interface LockingOutboxRepository : ReactiveCrudRepository<OutboxEvent, Long> {
-  @Query("SELECT * FROM outbox WHERE idempotency_key = :idempotencyKey AND type = :type FOR UPDATE")
+  @Query("SELECT * FROM outbox WHERE idempotency_key = CAST(:idempotencyKey AS UUID) AND type = :type FOR UPDATE")
   fun findLockingByIdempotencyKeyAndType(
     idempotencyKey: String,
     type: String,
   ): Mono<OutboxEvent>
 
-  @Query("UPDATE outbox SET status = :newStatus WHERE idempotency_key = :idempotencyKey AND type = :type")
+  @Query("UPDATE outbox SET status = :newStatus WHERE idempotency_key = CAST(:idempotencyKey AS UUID) AND type = :type")
   fun updateStatusByIdempotencyKeyAndType(
     idempotencyKey: String,
     type: String,

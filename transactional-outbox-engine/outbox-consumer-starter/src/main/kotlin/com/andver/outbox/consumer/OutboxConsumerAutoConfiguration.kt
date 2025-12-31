@@ -7,10 +7,12 @@ import com.andver.outbox.consumer.service.IdempotentEventProcessor
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
 import org.springframework.kafka.annotation.EnableKafka
 
-@EnableKafka
 @AutoConfiguration
+@EnableR2dbcRepositories(basePackages = ["com.andver.outbox.consumer.repository"])
+@EnableKafka
 @ConditionalOnProperty(prefix = "outbox.consumer", name = ["enabled"], matchIfMissing = false)
 class OutboxConsumerAutoConfiguration(
   private val lockingOutboxRepository: LockingOutboxRepository,
