@@ -23,7 +23,7 @@ dependencies {
   implementation("org.postgresql:r2dbc-postgresql:1.0.5.RELEASE")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
-  implementation(project(":transactional-outbox-engine:outbox-model"))
+  api(project(":transactional-outbox-engine:outbox-model"))
 }
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {

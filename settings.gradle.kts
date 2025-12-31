@@ -21,4 +21,6 @@ include(
   "transactional-outbox-engine:outbox-model",
   "transactional-outbox-engine:outbox-publisher-starter",
   "transactional-outbox-engine:outbox-consumer-starter",
+  "transactional-outbox-engine:simple-order-microservice",
+  "transactional-outbox-engine:simple-notification-microservice",
 )

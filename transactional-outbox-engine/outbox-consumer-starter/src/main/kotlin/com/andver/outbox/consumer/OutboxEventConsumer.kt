@@ -16,8 +16,8 @@ class OutboxEventConsumer(
   private val handlersByType = eventHandlers.associateBy { it.eventType }
 
   @KafkaListener(
-    topics = ["\${outbox.consumer.topics}"],
-    groupId = "\${outbox.consumer.group-id:\${spring.application.name}-outbox}",
+    topics = ["#{'\${outbox.consumer.topics}'.split(',')}"],
+    groupId = "\${outbox.consumer.group-id}",
     properties = [
       "key.deserializer=org.apache.kafka.common.serialization.StringDeserializer",
       "value.deserializer=org.apache.kafka.common.serialization.StringDeserializer"
