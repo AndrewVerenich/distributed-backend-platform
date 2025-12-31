@@ -77,3 +77,24 @@
 - Redisson (Redis)
 - PostgreSQL
 - Docker Compose
+
+---
+
+### 5. [transactional-outbox-engine](./transactional-outbox-engine/README.md)
+Реализация Transactional Outbox Pattern с использованием Debezium CDC для гарантированной доставки событий между микросервисами.
+
+**Описание:**
+- Атомарная публикация событий в outbox таблицу в той же транзакции, что и основная бизнес-операция.
+- Автоматическая публикация в Kafka через Debezium с использованием EventRouter и ExtractNewRecordState SMT.
+- Exactly-once семантика через Debezium `exactly.once.support=REQUIRED` и идемпотентную обработку на стороне consumer.
+- Spring Boot Starter для публикации (outbox-publisher-starter) и обработки (outbox-consumer-starter) событий.
+- Идемпотентная обработка через проверку `idempotency_key` с блокировкой `SELECT FOR UPDATE`.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Kafka
+- Debezium 2.5 (PostgreSQL Connector)
+- Kafka Connect SMT (EventRouter, ExtractNewRecordState)
+- PostgreSQL
+- Docker Compose
