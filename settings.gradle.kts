@@ -23,4 +23,7 @@ include(
   "transactional-outbox-engine:outbox-consumer-starter",
   "transactional-outbox-engine:simple-order-microservice",
   "transactional-outbox-engine:simple-notification-microservice",
+
+  "websocket-gateway:websocket-gateway",
+  "websocket-gateway:client-notification-model",
 )
