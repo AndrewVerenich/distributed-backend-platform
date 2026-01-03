@@ -1,4 +1,4 @@
-package com.andver.outbox.publisher
+package com.andver.client.notification.sender
 
 import com.andver.client.notification.model.server.DOMAIN_SERVER_EVENT_TOPIC
 import com.andver.client.notification.model.server.DomainServerEvent

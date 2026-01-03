@@ -20,7 +20,7 @@ abstract class AbstractClientNotificationEventHandler<T : Any> : ClientNotificat
       .thenReturn(event)
   }
 
-  protected abstract fun handle(userId: Long, payload: T?): Mono<Void>
+  protected abstract fun handle(userId: Long, payload: T?): Mono<Unit>
 
   fun deserializePayload(payloadJson: Map<String, Any?>?): T? {
     if (payloadJson == null) return null
