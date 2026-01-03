@@ -1,7 +1,6 @@
 package com.andver.client.notification
 
 import com.andver.client.notification.handler.ClientNotificationEventHandler
-import com.andver.client.notification.model.client.DOMAIN_CLIENT_EVENT_TOPIC
 import com.andver.client.notification.model.client.DomainClientEvent
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
@@ -15,11 +14,13 @@ class ClientNotificationConsumer(
   private val handlersByType = eventHandlers.associateBy { it.eventType }
 
   @KafkaListener(
-    topics = [DOMAIN_CLIENT_EVENT_TOPIC],
+    topics = ["#{'\${client.notification.consumer.topics}'.split(',')}"],
     groupId = "\${client.notification.consumer.group-id}",
     properties = [
       "key.deserializer=org.apache.kafka.common.serialization.StringDeserializer",
-      "value.deserializer=org.springframework.kafka.support.serializer.JsonDeserializer"
+      "value.deserializer=org.springframework.kafka.support.serializer.JsonDeserializer",
+      "spring.json.value.default.type=com.andver.client.notification.model.client.DomainClientEvent",
+      "spring.json.trusted.packages=*"
     ]
   )
   fun consume(
@@ -40,7 +41,7 @@ class ClientNotificationConsumer(
           acknowledgment.acknowledge()
         }
         .doOnError { error ->
-          log.error("Error processing event=$event, error)")
+          log.error("Error processing event=$event, error)", error)
         }
         .subscribe()
     } catch (e: Exception) {
