@@ -28,4 +28,5 @@ include(
   "websocket-gateway:client-notification-model",
   "websocket-gateway:client-notification",
   "websocket-gateway:client-notification-sender-starter",
+  "websocket-gateway:client-notification-consumer-starter",
 )
