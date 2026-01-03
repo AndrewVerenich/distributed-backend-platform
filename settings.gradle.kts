@@ -26,4 +26,6 @@ include(
 
   "websocket-gateway:websocket-gateway",
   "websocket-gateway:client-notification-model",
+  "websocket-gateway:client-notification",
+  "websocket-gateway:client-notification-sender-starter",
 )
