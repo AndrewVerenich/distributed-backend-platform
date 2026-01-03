@@ -1,6 +1,9 @@
 user:
   subscription:
     prefix: USER_SUBSCRIPTION
+jwt:
+  secret-key: k7Yj9mP2vN5xR8wQ3tZ6bC1dF4gH7jK0lM3nO6pS9uV2wX5yA8=
+  algorithm: HS256
 spring:
   data:
     redis:

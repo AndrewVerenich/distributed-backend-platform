@@ -66,25 +66,25 @@ services:
     ports:
       - "6379:6379"
 
-  nginx:
-    image: nginx:1.25
-    depends_on:
-      websocket-gateway:
-        condition: service_healthy
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-
-  websocket-gateway:
-    container_name: gateway
-    build:
-      context: ./websocket-gateway
-    depends_on:
-      init-kafka:
-        condition: service_completed_successfully
-    environment:
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_HOST=redis
-    restart: on-failure
+#  nginx:
+#    image: nginx:1.25
+#    depends_on:
+#      websocket-gateway:
+#        condition: service_healthy
+#    ports:
+#      - "8888:8888"
+#    volumes:
+#      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+#
+#  websocket-gateway:
+#    container_name: gateway
+#    build:
+#      context: ./websocket-gateway
+#    depends_on:
+#      init-kafka:
+#        condition: service_completed_successfully
+#    environment:
+#      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#      - SPRING_DATA_REDIS_HOST=redis
+#    restart: on-failure
 

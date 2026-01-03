@@ -20,7 +20,9 @@ import reactor.netty.http.server.HttpServerResponse
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
 
-private const val CHANNEL_ID_PARAM = "id"
+private const val TOKEN_PARAM = "token"
+private const val AUTHORIZATION_HEADER = "Authorization"
+private const val BEARER_PREFIX = "Bearer "
 const val USER_ID = "userId"
 
 @Component
@@ -44,8 +46,8 @@ class HandshakeHandler(
     val reactorResponse: HttpServerResponse = ServerHttpResponseDecorator.getNativeResponse(response)
     val handshakeInfo = handshakeInfoFactory.get()
 
-    val channelId = handshakeInfo.uri.query.removePrefix("$CHANNEL_ID_PARAM=")
-    val userId = authorizationService.provideUserId(channelId)
+    val token = extractToken(exchange)
+    val userId = authorizationService.provideUserId(token)
 
     return response.setComplete()
       .then(
@@ -59,22 +61,30 @@ class HandshakeHandler(
                 response.bufferFactory() as NettyDataBufferFactory,
                 NettyWebSocketSessionSupport.DEFAULT_FRAME_MAX_SIZE
               ).let { session ->
-                log.info("Connection established for userId=$userId, channelId=$channelId")
+                log.info("Connection established for userId=$userId")
                 connectionsCount.incrementAndGet()
                 session.attributes[USER_ID] = userId
                 webSocketHandler.handle(session)
                   .doFinally {
                     connectionsCount.decrementAndGet()
-                    log.info("Connection closed for userId=$userId, channelId=$channelId")
+                    log.info("Connection closed for userId=$userId")
                   }
               }
             }
           } else {
-            log.warn("Unauthorized request for channelId=$channelId")
+            log.warn("Unauthorized request - invalid or missing token")
             reactorResponse.status(HttpResponseStatus.UNAUTHORIZED).then()
           }
         }
       )
+  }
+
+  private fun extractToken(exchange: ServerWebExchange): String? {
+    val authHeader = exchange.request.headers.getFirst(AUTHORIZATION_HEADER)
+    if (authHeader != null && authHeader.startsWith(BEARER_PREFIX, ignoreCase = true)) {
+      return authHeader.substring(BEARER_PREFIX.length).trim()
+    }
+    return null
   }
 
   private companion object {

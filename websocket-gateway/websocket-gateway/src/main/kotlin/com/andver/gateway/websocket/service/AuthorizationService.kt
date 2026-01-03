@@ -3,13 +3,17 @@ package com.andver.gateway.websocket.service
 import org.springframework.stereotype.Component
 
 interface AuthorizationService {
-  fun provideUserId(channelId: String?): Long?
+  fun provideUserId(token: String?): Long?
 }
 
 @Component
 class DefaultAuthorizationService(
+  private val jwtService: JwtService,
 ) : AuthorizationService {
-  override fun provideUserId(channelId: String?): Long? {
-    return 1
+  override fun provideUserId(token: String?): Long? {
+    if (token == null) {
+      return null
+    }
+    return jwtService.validateToken(token).userId
   }
 }
