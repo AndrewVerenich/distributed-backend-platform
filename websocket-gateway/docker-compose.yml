@@ -76,15 +76,26 @@ services:
 #    volumes:
 #      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
 #
-#  websocket-gateway:
-#    container_name: gateway
-#    build:
-#      context: ./websocket-gateway
-#    depends_on:
-#      init-kafka:
-#        condition: service_completed_successfully
-#    environment:
-#      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-#      - SPRING_DATA_REDIS_HOST=redis
-#    restart: on-failure
+  websocket-gateway:
+    container_name: gateway
+    build:
+      context: ./websocket-gateway
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_REDIS_HOST=redis
+    restart: on-failure
+
+  client-notification:
+    build:
+      context: ./client-notification
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_REDIS_HOST=redis
+    restart: on-failure
 
