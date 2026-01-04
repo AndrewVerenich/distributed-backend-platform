@@ -98,3 +98,24 @@
 - Kafka Connect SMT (EventRouter, ExtractNewRecordState)
 - PostgreSQL
 - Docker Compose
+
+---
+
+### 6. [websocket-gateway](./websocket-gateway/README.md)
+Реализация WebSocket Gateway для двусторонней коммуникации в реальном времени между сервером и клиентами в микросервисной архитектуре.
+
+**Описание:**
+- WebSocket Gateway с JWT-авторизацией для управления соединениями клиентов.
+- Redis Pub/Sub для доставки real-time уведомлений пользователям через каналы подписок.
+- Интеграция с Kafka для получения событий от микросервисов и отправки событий от клиентов.
+- Spring Boot Starters для простой интеграции отправки и обработки событий в микросервисах.
+- Реактивная архитектура на Spring WebFlux для масштабируемости и эффективности.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- Spring Data Redis (Reactive)
+- Nimbus JOSE + JWT
+- Apache Kafka
+- Redis Pub/Sub
+- Docker Compose
