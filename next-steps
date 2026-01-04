@@ -1,4 +1,3 @@
-websocket-gateway
 rsocket-gateway
 grpc-gateway
 lock-manager
