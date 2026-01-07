@@ -119,3 +119,22 @@
 - Apache Kafka
 - Redis Pub/Sub
 - Docker Compose
+
+---
+
+### 7. [unique-id-generator](./unique-id-generator/README.md)
+Реализация распределённого генератора уникальных идентификаторов на основе алгоритма Snowflake для микросервисной архитектуры.
+
+**Описание:**
+- Генерация уникальных 64-битных ID с использованием алгоритма Snowflake.
+- Автоматическое определение worker ID через Eureka Service Discovery.
+- Горизонтальное масштабирование через Nginx Load Balancer.
+- Высокая производительность — до 4096 ID/мс на инстанс без обращения к БД.
+- Глобальная уникальность без координации между инстансами.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- Spring Cloud Netflix Eureka Client
+- Nginx (Load Balancer)
+- Docker Compose
