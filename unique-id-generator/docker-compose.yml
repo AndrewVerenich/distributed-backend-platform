@@ -5,6 +5,12 @@ services:
     image: nav2030/eureka-server:latest
     ports:
       - "8761:8761"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   load-balancer:
     image: nginx:1.25
@@ -25,7 +31,7 @@ services:
       context: ./unique-id-generator
     depends_on:
       eureka-server:
-        condition: service_started
+        condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     restart: on-failure
@@ -41,7 +47,7 @@ services:
       context: ./unique-id-generator
     depends_on:
       eureka-server:
-        condition: service_started
+        condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     restart: on-failure
@@ -57,7 +63,7 @@ services:
       context: ./unique-id-generator
     depends_on:
       eureka-server:
-        condition: service_started
+        condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     restart: on-failure
