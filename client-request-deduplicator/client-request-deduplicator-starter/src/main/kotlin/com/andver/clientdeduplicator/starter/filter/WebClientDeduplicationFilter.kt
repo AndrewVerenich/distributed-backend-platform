@@ -1,6 +1,6 @@
 package com.andver.clientdeduplicator.starter.filter
 
-import com.andver.clientdeduplicator.starter.body.X_CAPTURED_BODY_HEADER
+import com.andver.clientdeduplicator.starter.inserter.X_CAPTURED_BODY_HEADER
 import com.andver.clientdeduplicator.starter.cache.CacheClient
 import com.andver.clientdeduplicator.starter.cache.CacheRuleMatcher
 import com.andver.clientdeduplicator.starter.fingerprint.FingerprintGenerator

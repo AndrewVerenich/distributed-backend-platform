@@ -1,6 +1,5 @@
-package com.andver.clientdeduplicator.starter.body
+package com.andver.clientdeduplicator.starter.inserter
 
-import com.andver.clientdeduplicator.starter.fingerprint.FingerprintGenerator
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

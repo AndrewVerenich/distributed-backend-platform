@@ -4,6 +4,7 @@ import com.andver.clientdeduplicator.starter.cache.CacheClient
 import com.andver.clientdeduplicator.starter.cache.CacheRuleMatcher
 import com.andver.clientdeduplicator.starter.cache.DefaultCacheRuleMatcher
 import com.andver.clientdeduplicator.starter.cache.RedisCacheClient
+import com.andver.clientdeduplicator.starter.filter.DeduplicationWebClientCustomizer
 import com.andver.clientdeduplicator.starter.filter.WebClientDeduplicationFilter
 import com.andver.clientdeduplicator.starter.fingerprint.DefaultFingerprintGenerator
 import com.andver.clientdeduplicator.starter.fingerprint.FingerprintGenerator
@@ -13,6 +14,7 @@ import com.andver.clientdeduplicator.starter.properties.CacheProperties
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.web.reactive.function.client.WebClientCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.data.redis.core.ReactiveRedisTemplate
 
@@ -38,6 +40,13 @@ class ClientDeduplicatorAutoConfiguration(
       cacheRuleMatcher = cacheRuleMatcher,
       deduplicatorMetrics = deduplicatorMetrics,
     )
+  }
+
+  @Bean
+  fun deduplicationWebClientCustomizer(
+    filter: WebClientDeduplicationFilter,
+  ): WebClientCustomizer {
+    return DeduplicationWebClientCustomizer(filter)
   }
 
   @Bean
