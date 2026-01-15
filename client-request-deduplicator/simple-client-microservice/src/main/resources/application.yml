@@ -16,7 +16,7 @@ request:
     enabled: true
     rules:
       - method: POST
-        url: "/test"
+        url: "/order"
         ttl: "PT10S"
-        exclude-fields: []
-        exclude-query-params: []
+        exclude-fields: [ "timestamp" ]
+        exclude-query-params: [ ]

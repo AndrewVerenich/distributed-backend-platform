@@ -7,6 +7,7 @@ import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
@@ -33,17 +34,19 @@ class Configuration(
 class Controller(private val webClient: WebClient) {
   private val log: Logger = LoggerFactory.getLogger(Controller::class.java)
 
-  @GetMapping("/call")
+  @GetMapping("/test-call")
   fun call(): Mono<String> {
-    return webClient.post().uri("http://localhost:7778/test")
-      .capturedBody(Request("body", LocalDateTime.now()))
+    return webClient.post().uri("http://localhost:7778/order")
+      .contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON)
+      .capturedBody(CreateOrderRequest(productId = 10L, timestamp = LocalDateTime.now()))
       .retrieve()
       .bodyToMono(String::class.java)
-      .doOnNext { log.info("Received response=$it") }
+      .doOnNext { log.info("Received order creation response=$it") }
   }
 }
 
-data class Request(
-  val name: String,
+data class CreateOrderRequest(
+  val productId: Long,
   val timestamp: LocalDateTime,
 )

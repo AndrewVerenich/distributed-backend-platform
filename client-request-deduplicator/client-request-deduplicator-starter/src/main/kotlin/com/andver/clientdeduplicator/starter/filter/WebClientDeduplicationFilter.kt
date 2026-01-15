@@ -1,9 +1,9 @@
 package com.andver.clientdeduplicator.starter.filter
 
-import com.andver.clientdeduplicator.starter.inserter.X_CAPTURED_BODY_HEADER
 import com.andver.clientdeduplicator.starter.cache.CacheClient
 import com.andver.clientdeduplicator.starter.cache.CacheRuleMatcher
 import com.andver.clientdeduplicator.starter.fingerprint.FingerprintGenerator
+import com.andver.clientdeduplicator.starter.inserter.X_CAPTURED_BODY_HEADER
 import com.andver.clientdeduplicator.starter.metrics.DeduplicatorMetrics
 import com.andver.clientdeduplicator.starter.properties.CacheProperties
 import com.andver.clientdeduplicator.starter.properties.CacheRule
@@ -50,11 +50,11 @@ class WebClientDeduplicationFilter(
       excludeFields = rule.excludeFields,
       excludeQueryParams = rule.excludeQueryParams
     )
-    log.info("Fingerprint=$fingerprint for $method $uri $body")
+    log.info("Fingerprint=$fingerprint for $method $uri")
 
     return cacheClient.get(fingerprint)
       .map { cachedBody ->
-        log.info("Cache hit for $method $uri $body")
+        log.info("Cache hit for $method $uri")
         deduplicatorMetrics.hit(method, uri)
         ClientResponse.create(HttpStatus.OK)
           .header(X_CACHE_HEADER, HIT)
@@ -82,7 +82,7 @@ class WebClientDeduplicationFilter(
           .defaultIfEmpty("")
           .flatMap { responseBody ->
             if (status.is2xxSuccessful) {
-              log.info("Cache miss for $method $uri $body")
+              log.info("Cache miss for $method $uri")
               deduplicatorMetrics.miss(method, uri)
               cacheClient.set(fingerprint, responseBody, rule.ttl)
                 .thenReturn(
@@ -92,7 +92,7 @@ class WebClientDeduplicationFilter(
                     .build()
                 )
             } else {
-              log.info("Cache bypass for $method $uri $body")
+              log.info("Cache bypass for $method $uri")
               deduplicatorMetrics.bypass(method, uri)
               ClientResponse.create(status)
                 .headers { it.addAll(response.headers().asHttpHeaders()) }
