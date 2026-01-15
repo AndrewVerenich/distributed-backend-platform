@@ -1,0 +1,17 @@
+server:
+  port: 7777
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+request:
+  deduplicator:
+    enabled: true
+    rules:
+      - method: POST
+        url: "/test"
+        ttl: "PT10S"
+        exclude-fields: []
+        exclude-query-params: []
