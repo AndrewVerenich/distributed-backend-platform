@@ -1,7 +1,6 @@
 rsocket-gateway
 grpc-gateway
 lock-manager
-idempotency Service — защита от дублирования запросов
 saga-orchestrator
 time-service (Clock Skew Compensation — компенсация рассинхронизации времени)
 api-gateway, rate limiter, circuit breaker
@@ -9,6 +8,5 @@ event-sourcing, cqrs
 A/B testing
 performance testing
 distributed Deadlock Detection — обнаружение deadlock'ов
-dead letter service
 high load counter
 consistent hashing

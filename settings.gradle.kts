@@ -33,4 +33,8 @@ include(
 
   "unique-id-generator:unique-id-generator",
   "unique-id-generator:simple-client",
+
+  "client-request-deduplicator:client-request-deduplicator-starter",
+  "client-request-deduplicator:simple-client-microservice",
+  "client-request-deduplicator:simple-server-microservice",
 )
