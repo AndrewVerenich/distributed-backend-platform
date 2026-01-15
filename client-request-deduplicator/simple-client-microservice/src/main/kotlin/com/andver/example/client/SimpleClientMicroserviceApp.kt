@@ -1,7 +1,6 @@
 package com.andver.example.client
 
-import com.andver.clientdeduplicator.starter.body.capturedBody
-import com.andver.clientdeduplicator.starter.filter.WebClientDeduplicationFilter
+import com.andver.clientdeduplicator.starter.inserter.capturedBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.SpringApplication
@@ -24,11 +23,10 @@ fun main(args: Array<String>) {
 @Configuration
 class Configuration(
   private val builder: WebClient.Builder,
-  private val deduplicationFilter: WebClientDeduplicationFilter
 ) {
 
   @Bean
-  fun webClient(): WebClient = builder.filter(deduplicationFilter).build()
+  fun webClient(): WebClient = builder.build()
 }
 
 @RestController
