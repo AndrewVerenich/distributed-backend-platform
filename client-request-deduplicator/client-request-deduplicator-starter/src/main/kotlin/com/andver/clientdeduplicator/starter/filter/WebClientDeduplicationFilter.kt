@@ -42,11 +42,11 @@ class WebClientDeduplicationFilter(
     val rule =
       cacheRuleMatcher.findRule(method, request.url().path) ?: return next.exchange(removeCapturedHeader(request))
     val uri = request.url().toString()
-    val body = request.headers().getFirst(X_CAPTURED_BODY_HEADER)
+    val requestBody = request.headers().getFirst(X_CAPTURED_BODY_HEADER)
     val fingerprint = fingerprintGenerator.generate(
       method = method,
       uri = uri,
-      body = body,
+      body = requestBody,
       excludeFields = rule.excludeFields,
       excludeQueryParams = rule.excludeQueryParams
     )
@@ -62,7 +62,7 @@ class WebClientDeduplicationFilter(
           .build()
       }
       .switchIfEmpty {
-        exchangeAndCache(next, request, method, uri, body, fingerprint, rule)
+        exchangeAndCache(next, request, method, uri, fingerprint, rule)
       }
   }
 
@@ -71,7 +71,6 @@ class WebClientDeduplicationFilter(
     request: ClientRequest,
     method: String,
     uri: String,
-    body: String?,
     fingerprint: String,
     rule: CacheRule
   ): Mono<ClientResponse> {
