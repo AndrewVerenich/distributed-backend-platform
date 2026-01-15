@@ -10,10 +10,10 @@ interface DeduplicatorMetrics {
   fun bypass(method: String, url: String)
 }
 
-private const val CLIENT_REQUEST_DEDUP_CACHE_TOTAL = "client_request_dedup_cache_total"
-private const val CLIENT_REQUEST_DEDUP_CACHE_HIT = "client_request_dedup_cache_hit"
-private const val CLIENT_REQUEST_DEDUP_CACHE_MISS = "client_request_dedup_cache_miss"
-private const val CLIENT_REQUEST_DEDUP_CACHE_BYPASS = "client_request_dedup_cache_bypass"
+private const val CLIENT_REQUEST_DEDUP_CACHE_TOTAL = "client.request.dedup.cache.total"
+private const val CLIENT_REQUEST_DEDUP_CACHE_HIT = "client.request.dedup.cache.hit"
+private const val CLIENT_REQUEST_DEDUP_CACHE_MISS = "client.request.dedup.cache.miss"
+private const val CLIENT_REQUEST_DEDUP_CACHE_BYPASS = "client.request.dedup.cache.bypass"
 
 class DefaultDeduplicatorMetrics(
   private val meterRegistry: MeterRegistry,

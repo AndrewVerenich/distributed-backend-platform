@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.security.MessageDigest
 
@@ -19,7 +20,10 @@ interface FingerprintGenerator {
 }
 
 class DefaultFingerprintGenerator : FingerprintGenerator {
-  private val mapper: ObjectMapper = jacksonObjectMapper().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+  private val mapper: ObjectMapper = jacksonObjectMapper()
+    .registerModule(JavaTimeModule())
+    .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
   override fun generate(
     method: String,
