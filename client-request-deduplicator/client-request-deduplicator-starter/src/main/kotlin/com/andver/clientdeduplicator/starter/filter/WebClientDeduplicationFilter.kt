@@ -1,5 +1,6 @@
 package com.andver.clientdeduplicator.starter.filter
 
+import com.andver.clientdeduplicator.starter.body.X_CAPTURED_BODY_HEADER
 import com.andver.clientdeduplicator.starter.cache.CacheClient
 import com.andver.clientdeduplicator.starter.cache.CacheRuleMatcher
 import com.andver.clientdeduplicator.starter.fingerprint.FingerprintGenerator
@@ -28,18 +29,20 @@ class WebClientDeduplicationFilter(
   private val cacheRuleMatcher: CacheRuleMatcher,
   private val deduplicatorMetrics: DeduplicatorMetrics,
 ) : ExchangeFilterFunction {
+
   private val log = LoggerFactory.getLogger(WebClientDeduplicationFilter::class.java)
+
   override fun filter(
     request: ClientRequest,
     next: ExchangeFunction
   ): Mono<ClientResponse> {
-    if (!cacheProperties.enabled) return next.exchange(request)
+    if (!cacheProperties.enabled) return next.exchange(removeCapturedHeader(request))
 
     val method = request.method().name()
-    val rule = cacheRuleMatcher.findRule(method, request.url().path) ?: return next.exchange(request)
-
-    val body = extractBody(request)
+    val rule =
+      cacheRuleMatcher.findRule(method, request.url().path) ?: return next.exchange(removeCapturedHeader(request))
     val uri = request.url().toString()
+    val body = request.headers().getFirst(X_CAPTURED_BODY_HEADER)
     val fingerprint = fingerprintGenerator.generate(
       method = method,
       uri = uri,
@@ -72,7 +75,7 @@ class WebClientDeduplicationFilter(
     fingerprint: String,
     rule: CacheRule
   ): Mono<ClientResponse> {
-    return next.exchange(request)
+    return next.exchange(removeCapturedHeader(request))
       .flatMap { response ->
         val status = response.statusCode()
         response.bodyToMono(String::class.java)
@@ -101,11 +104,7 @@ class WebClientDeduplicationFilter(
       }
   }
 
-  private fun extractBody(request: ClientRequest): String? {
-    return try {
-      request.body().toString()
-    } catch (_: Exception) {
-      null
-    }
+  private fun removeCapturedHeader(request: ClientRequest): ClientRequest {
+    return ClientRequest.from(request).headers { it.remove(X_CAPTURED_BODY_HEADER) }.build()
   }
 }
