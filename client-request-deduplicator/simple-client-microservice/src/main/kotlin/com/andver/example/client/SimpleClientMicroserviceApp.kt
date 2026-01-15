@@ -26,7 +26,6 @@ fun main(args: Array<String>) {
 class Configuration(
   private val builder: WebClient.Builder,
 ) {
-
   @Bean
   fun webClient(): WebClient = builder.build()
 }

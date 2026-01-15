@@ -7,3 +7,24 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+
+  simple-client-microservice:
+    build:
+      context: ./simple-client-microservice
+    ports: [ "7777:7777" ]
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      SERVER_HOST: simple-server-microservice
+      SPRING_DATA_REDIS_HOST: redis
+    restart: on-failure
+
+  simple-server-microservice:
+    build:
+      context: ./simple-server-microservice
+    ports: [ "7778:7778" ]
+    depends_on:
+      redis:
+        condition: service_started
+    restart: on-failure
