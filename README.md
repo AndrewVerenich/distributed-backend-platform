@@ -138,3 +138,23 @@
 - Spring Cloud Netflix Eureka Client
 - Nginx (Load Balancer)
 - Docker Compose
+
+---
+
+### 8. [client-request-deduplicator](./client-request-deduplicator/README.md)
+Реализация клиентской дедупликации HTTP-запросов для предотвращения дублирования запросов и снижения нагрузки на микросервисы.
+
+**Описание:**
+- Генерация fingerprint запросов на основе HTTP метода, URI и тела запроса.
+- Кэширование успешных ответов (2xx) в Redis с настраиваемым TTL.
+- Исключение временных полей и query параметров из fingerprint для корректной дедупликации.
+- Spring Boot Starter для автоматической интеграции через WebClient Filter.
+- Метрики для мониторинга эффективности кэширования (hit/miss/bypass).
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- Spring Data Redis (Reactive)
+- Jackson
+- Micrometer
+- Docker Compose
