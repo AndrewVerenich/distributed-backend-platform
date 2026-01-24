@@ -1,0 +1,18 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: simple-client
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+time:
+  service-url: http://localhost:8080
+  node-id: client-1
+  sync:
+    enabled: true
+    interval-ms: 30000
+
