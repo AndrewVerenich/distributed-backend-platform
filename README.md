@@ -158,3 +158,21 @@
 - Jackson
 - Micrometer
 - Docker Compose
+
+---
+
+### 9. [time-service](./time-service/README.md)
+Реализация сервиса компенсации рассинхронизации времени (Clock Skew Compensation) для распределенных систем.
+
+**Описание:**
+- Time Service как единый источник истины о времени.
+- Автоматическая компенсация clock skew через измерение offset относительно Time Service.
+- Spring Boot Starter для интеграции в микросервисы.
+- Периодическая ресинхронизация для компенсации clock drift.
+- Кэширование offset в Redis для отказоустойчивости.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- Spring Data Redis (Reactive)
+- Docker Compose

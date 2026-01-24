@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  time-service:
+    build:
+      context: ./time-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/time/now" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  simple-client-microservice:
+    build:
+      context: ./simple-client-microservice
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      time-service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      TIME_SERVICE_URL: http://time-service:8080
+      TIME_NODE_ID: client-1
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+

@@ -37,4 +37,8 @@ include(
   "client-request-deduplicator:client-request-deduplicator-starter",
   "client-request-deduplicator:simple-client-microservice",
   "client-request-deduplicator:simple-server-microservice",
+
+  "time-service:time-service",
+  "time-service:time-client-starter",
+  "time-service:simple-client-microservice",
 )
