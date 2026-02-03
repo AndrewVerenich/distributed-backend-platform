@@ -41,4 +41,6 @@ include(
   "time-service:time-service",
   "time-service:time-client-starter",
   "time-service:simple-client-microservice",
+
+  "event-sourcing-cqrs-banking:banking-command-api",
 )
