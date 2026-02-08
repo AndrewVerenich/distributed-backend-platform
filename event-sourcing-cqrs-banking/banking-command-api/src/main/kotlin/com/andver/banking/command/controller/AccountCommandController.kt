@@ -1,7 +1,7 @@
 package com.andver.banking.command.controller
 
 import com.andver.banking.command.handler.CommandHandler
-import com.andver.banking.command.model.AccountCommand
+import com.andver.banking.domain.AccountCommand
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -45,6 +45,6 @@ class AccountCommandController(
   }
 }
 
-data class OpenAccountRequest(val accountId: Long, val owner: String)
+data class OpenAccountRequest(val accountId: Long, val owner: Long)
 data class DepositRequest(val accountId: Long, val amount: BigDecimal)
 data class WithdrawRequest(val accountId: Long, val amount: BigDecimal)
