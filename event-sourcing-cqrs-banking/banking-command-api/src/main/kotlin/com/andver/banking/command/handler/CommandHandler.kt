@@ -1,9 +1,9 @@
 package com.andver.banking.command.handler
 
-import com.andver.banking.command.model.AccountCommand
-import com.andver.banking.command.model.AggregateType
-import com.andver.banking.command.model.EventType
 import com.andver.banking.command.repository.EventStoreRepository
+import com.andver.banking.domain.AccountCommand
+import com.andver.banking.domain.AggregateType
+import com.andver.banking.domain.EventType
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty

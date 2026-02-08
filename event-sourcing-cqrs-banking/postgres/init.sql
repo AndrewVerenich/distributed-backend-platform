@@ -25,11 +25,10 @@ CREATE TABLE account_snapshot
 
 CREATE TABLE account_balance
 (
-    account_id BIGINT         NOT NULL PRIMARY KEY,
-    owner_id   VARCHAR(255)   NOT NULL,
-    balance    NUMERIC(19, 4) NOT NULL DEFAULT 0,
-    version    BIGINT         NOT NULL DEFAULT 0,
-    updated_at TIMESTAMPT     NOT NULL DEFAULT NOW()
+    id          BIGSERIAL       NOT NULL PRIMARY KEY,
+    owner_id   BIGINT           NOT NULL,
+    balance    NUMERIC(19, 2)   NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP        NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_account_balance_owner ON account_balance (owner_id);
@@ -38,6 +37,6 @@ CREATE TABLE projection_processed_events
 (
     event_id     UUID         NOT NULL,
     consumer     VARCHAR(100) NOT NULL,
-    processed_at TIMESTAMPT   NOT NULL DEFAULT NOW(),
+    processed_at TIMESTAMP      NOT NULL DEFAULT NOW(),
     PRIMARY KEY (event_id, consumer)
 );
