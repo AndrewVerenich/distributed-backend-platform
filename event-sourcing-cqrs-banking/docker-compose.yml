@@ -125,4 +125,31 @@ services:
       --partitions 2 \
       --replication-factor 1"
 
+  banking-command-api:
+    build:
+      context: ./banking-command-api
+    ports: [ "8081:8081" ]
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/master
+    restart: on-failure
+
+  projection-balance:
+    build:
+      context: ./projection-balance
+    ports: [ "8082:8082" ]
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/master
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    restart: on-failure
+
 
