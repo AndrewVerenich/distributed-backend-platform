@@ -44,5 +44,6 @@ include(
 
   "event-sourcing-cqrs-banking:banking-domain",
   "event-sourcing-cqrs-banking:banking-command-api",
+  "event-sourcing-cqrs-banking:banking-query-api",
   "event-sourcing-cqrs-banking:projection-balance",
 )
