@@ -3,7 +3,6 @@ grpc-gateway
 lock-manager
 saga-orchestrator
 api-gateway, rate limiter, circuit breaker
-event-sourcing, cqrs
 A/B testing
 performance testing
 distributed Deadlock Detection — обнаружение deadlock'ов
