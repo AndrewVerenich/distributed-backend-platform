@@ -1,6 +1,6 @@
 package com.andver.banking.projection.repository
 
-import com.andver.banking.projection.model.AccountBalance
+import com.andver.banking.domain.entity.AccountBalance
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import reactor.core.publisher.Mono

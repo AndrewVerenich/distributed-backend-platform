@@ -1,6 +1,6 @@
 package com.andver.banking.query.repository
 
-import com.andver.banking.query.model.AccountBalanceSnapshot
+import com.andver.banking.domain.entity.AccountBalanceSnapshot
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import reactor.core.publisher.Mono
 import java.time.LocalDateTime

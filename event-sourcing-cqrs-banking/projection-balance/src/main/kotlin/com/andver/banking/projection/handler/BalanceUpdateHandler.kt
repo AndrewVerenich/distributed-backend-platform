@@ -1,7 +1,7 @@
 package com.andver.banking.projection.handler
 
 import com.andver.banking.domain.EventType
-import com.andver.banking.projection.model.AccountBalance
+import com.andver.banking.domain.entity.AccountBalance
 import com.andver.banking.projection.model.BankingEvent
 import com.andver.banking.projection.repository.AccountBalanceRepository
 import com.andver.banking.projection.repository.AccountBalanceSnapshotRepository
@@ -35,7 +35,7 @@ class DefaultBalanceUpdateHandler(
 
   override fun handle(event: BankingEvent): Mono<Void> {
     val updatedAt = LocalDateTime.ofInstant(
-      Instant.ofEpochMilli(event.createdAt / 1000),
+      Instant.ofEpochMilli(event.createdAt),
       ZoneOffset.UTC
     )
     return when (event.eventType) {

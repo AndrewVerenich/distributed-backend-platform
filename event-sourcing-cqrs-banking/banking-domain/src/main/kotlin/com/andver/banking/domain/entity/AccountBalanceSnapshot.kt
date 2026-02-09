@@ -1,14 +1,14 @@
-package com.andver.banking.projection.model
+package com.andver.banking.domain.entity
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-@Table("account_balance")
-data class AccountBalance(
+@Table("account_balance_snapshot")
+data class AccountBalanceSnapshot(
   @Id val id: Long?,
-  val ownerId: Long,
+  val accountId: Long,
   val balance: BigDecimal,
-  val updatedAt: LocalDateTime,
+  val createdAt: LocalDateTime,
 )

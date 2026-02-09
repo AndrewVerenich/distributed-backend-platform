@@ -3,9 +3,9 @@ package com.andver.banking.query.service
 import com.andver.banking.domain.AccountCommand
 import com.andver.banking.domain.AggregateType
 import com.andver.banking.domain.EventType
-import com.andver.banking.query.model.AccountBalance
-import com.andver.banking.query.model.AccountBalanceSnapshot
-import com.andver.banking.query.model.BankingEvent
+import com.andver.banking.domain.entity.AccountBalance
+import com.andver.banking.domain.entity.AccountBalanceSnapshot
+import com.andver.banking.domain.entity.BankingEvent
 import com.andver.banking.query.repository.AccountBalanceRepository
 import com.andver.banking.query.repository.AccountBalanceSnapshotRepository
 import com.andver.banking.query.repository.EventStoreRepository
@@ -55,7 +55,7 @@ class DefaultAccountBalanceService(
 
   fun getBalanceAtTimeBySnapshot(snapshot: AccountBalanceSnapshot, time: LocalDateTime): Mono<BigDecimal> {
     log.info("Get balance at $time for accountId=${snapshot.accountId}. Found snapshot=$snapshot")
-    return eventStoreRepository.findAllBankingEventByAggregateIdAndAggregateTypeAndCreatedAtBetweenOrderByVersion(
+    return eventStoreRepository.findAllBankingEventByAggregateIdAndAggregateTypeAndCreatedAtAfterAndCreatedAtBeforeOrderByVersion(
       snapshot.accountId,
       AggregateType.ACCOUNT,
       snapshot.createdAt,

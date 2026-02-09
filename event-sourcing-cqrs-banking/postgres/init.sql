@@ -16,7 +16,7 @@ CREATE INDEX idx_event_store_created_at ON event_store (created_at);
 
 CREATE TABLE account_balance
 (
-    id          BIGSERIAL       NOT NULL PRIMARY KEY,
+    id         BIGSERIAL       NOT NULL PRIMARY KEY,
     owner_id   BIGINT           NOT NULL,
     balance    NUMERIC(19, 2)   NOT NULL DEFAULT 0,
     updated_at TIMESTAMP(3)     NOT NULL DEFAULT NOW()
@@ -29,6 +29,7 @@ CREATE TABLE account_balance_snapshot
     id          BIGSERIAL       NOT NULL PRIMARY KEY,
     account_id  BIGINT          NOT NULL,
     balance     NUMERIC(19, 2)  NOT NULL DEFAULT 0,
-    version     BIGINT          NOT NULL,
     created_at  TIMESTAMP(3)    NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX idx_account_balance_snapshot_account_id ON account_balance_snapshot (account_id);

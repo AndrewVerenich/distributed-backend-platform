@@ -1,8 +1,8 @@
 package com.andver.banking.command.repository
 
-import com.andver.banking.command.model.BankingEvent
 import com.andver.banking.domain.AggregateType
 import com.andver.banking.domain.EventType
+import com.andver.banking.domain.entity.BankingEvent
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import reactor.core.publisher.Mono
