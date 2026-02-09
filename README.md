@@ -185,3 +185,24 @@ Capture), распределёнными транзакциями и други�
 - Spring Boot 3 (WebFlux)
 - Spring Data Redis (Reactive)
 - Docker Compose
+
+---
+
+### 10. [event-sourcing-cqrs-banking](./event-sourcing-cqrs-banking/README.md)
+Реализация Event Sourcing и CQRS паттернов для банковской системы с поддержкой temporal queries и snapshots.
+
+**Описание:**
+- Event Store в PostgreSQL для хранения всей истории событий с версионированием.
+- CQRS разделение на Command API (write) и Query API (read) с независимым масштабированием.
+- Debezium CDC для автоматической публикации событий из Event Store в Kafka.
+- Projection Service для асинхронного обновления Read Model из событий.
+- Temporal queries — получение баланса счёта на любой момент времени через event replay.
+- Snapshots для оптимизации восстановления состояния при большом количестве событий.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Kafka
+- Debezium 2.5 (PostgreSQL Connector)
+- PostgreSQL
+- Docker Compose
