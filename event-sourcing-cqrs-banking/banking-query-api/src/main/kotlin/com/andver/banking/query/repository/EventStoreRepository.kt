@@ -12,4 +12,11 @@ interface EventStoreRepository : ReactiveCrudRepository<BankingEvent, Long> {
     aggregateType: AggregateType,
     time: LocalDateTime,
   ): Flux<BankingEvent>
+
+  fun findAllBankingEventByAggregateIdAndAggregateTypeAndCreatedAtBetweenOrderByVersion(
+    aggregateId: Long,
+    aggregateType: AggregateType,
+    startTime: LocalDateTime,
+    endTime: LocalDateTime,
+  ): Flux<BankingEvent>
 }

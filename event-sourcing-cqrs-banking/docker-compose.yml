@@ -138,6 +138,19 @@ services:
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/master
     restart: on-failure
 
+  banking-query-api:
+    build:
+      context: ./bbanking-query-api
+    ports: [ "8084:8084" ]
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/master
+    restart: on-failure
+
   projection-balance:
     build:
       context: ./projection-balance
