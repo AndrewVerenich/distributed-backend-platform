@@ -1,4 +1,4 @@
-package com.andver.banking.query.model
+package com.andver.banking.domain.entity
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table

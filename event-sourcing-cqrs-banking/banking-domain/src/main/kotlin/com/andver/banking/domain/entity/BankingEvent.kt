@@ -1,4 +1,4 @@
-package com.andver.banking.command.model
+package com.andver.banking.domain.entity
 
 import com.andver.banking.domain.AggregateType
 import com.andver.banking.domain.EventType

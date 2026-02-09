@@ -15,3 +15,7 @@ java {
 repositories {
   mavenCentral()
 }
+
+dependencies {
+  implementation("org.springframework.data:spring-data-relational")
+}
