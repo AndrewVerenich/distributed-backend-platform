@@ -2,6 +2,8 @@ server:
   port: 8082
 command-event:
   topic: debezium.public.event_store
+  snapshot:
+    every-events: 10
 spring:
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/master
