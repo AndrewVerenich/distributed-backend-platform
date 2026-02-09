@@ -7,7 +7,7 @@ CREATE TABLE event_store
     event_type     VARCHAR(100) NOT NULL,
     payload        JSONB        NOT NULL,
     version        BIGINT       NOT NULL,
-    created_at     TIMESTAMP    NOT NULL DEFAULT NOW(),
+    created_at     TIMESTAMP(3) NOT NULL DEFAULT NOW(),
     UNIQUE (aggregate_id, version)
 );
 
@@ -19,7 +19,7 @@ CREATE TABLE account_balance
     id          BIGSERIAL       NOT NULL PRIMARY KEY,
     owner_id   BIGINT           NOT NULL,
     balance    NUMERIC(19, 2)   NOT NULL DEFAULT 0,
-    updated_at TIMESTAMP        NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP(3)     NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_account_balance_owner ON account_balance (owner_id);
@@ -29,5 +29,6 @@ CREATE TABLE account_balance_snapshot
     id          BIGSERIAL       NOT NULL PRIMARY KEY,
     account_id  BIGINT          NOT NULL,
     balance     NUMERIC(19, 2)  NOT NULL DEFAULT 0,
-    created_at  TIMESTAMP       NOT NULL DEFAULT NOW()
+    version     BIGINT          NOT NULL,
+    created_at  TIMESTAMP(3)    NOT NULL DEFAULT NOW()
 );
