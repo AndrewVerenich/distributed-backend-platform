@@ -14,15 +14,6 @@ CREATE TABLE event_store
 CREATE INDEX idx_event_store_aggregate_version ON event_store (aggregate_id, version);
 CREATE INDEX idx_event_store_created_at ON event_store (created_at);
 
-CREATE TABLE account_snapshot
-(
-    aggregate_id   BIGINT       NOT NULL PRIMARY KEY,
-    aggregate_type VARCHAR(100) NOT NULL DEFAULT 'Account',
-    payload        JSONB        NOT NULL,
-    version        BIGINT       NOT NULL,
-    created_at     TIMESTAMP    NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE account_balance
 (
     id          BIGSERIAL       NOT NULL PRIMARY KEY,
@@ -33,10 +24,10 @@ CREATE TABLE account_balance
 
 CREATE INDEX idx_account_balance_owner ON account_balance (owner_id);
 
-CREATE TABLE projection_processed_events
+CREATE TABLE account_balance_snapshot
 (
-    event_id     UUID         NOT NULL,
-    consumer     VARCHAR(100) NOT NULL,
-    processed_at TIMESTAMP      NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (event_id, consumer)
+    id          BIGSERIAL       NOT NULL PRIMARY KEY,
+    account_id  BIGINT          NOT NULL,
+    balance     NUMERIC(19, 2)  NOT NULL DEFAULT 0,
+    created_at  TIMESTAMP       NOT NULL DEFAULT NOW()
 );
