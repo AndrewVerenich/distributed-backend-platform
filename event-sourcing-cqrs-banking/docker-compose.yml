@@ -140,7 +140,7 @@ services:
 
   banking-query-api:
     build:
-      context: ./bbanking-query-api
+      context: ./banking-query-api
     ports: [ "8084:8084" ]
     depends_on:
       init-kafka:
