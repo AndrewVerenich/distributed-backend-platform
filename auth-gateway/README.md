@@ -393,10 +393,8 @@ curl http://localhost:8888/api/me \
 ### 🔧 Эндпоинты
 
 ```kotlin
-GET  /api/me         // Информация о текущем пользователе
-GET  /api/orders     // Список заказов пользователя
-POST /api/orders     // Создание заказа
-GET  /api/profile    // Профиль пользователя
+GET /api/me         // Информация о текущем пользователе
+GET /api/orders     // Список заказов пользователя
 ```
 
 **Особенности:**
@@ -688,19 +686,7 @@ curl http://localhost:8888/api/orders \
 ]
 ```
 
-### 6. Создание заказа
-
-```bash
-curl -X POST http://localhost:8888/api/orders \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "productName": "Laptop",
-    "amount": 1299.99
-  }'
-```
-
-### 7. Refresh токенов (rotation)
+### 6. Refresh токенов (rotation)
 
 ```bash
 # Через 15+ минут access токен истекает
@@ -729,7 +715,7 @@ curl -X POST http://localhost:8888/auth/refresh \
 6. Сохраняет новый refresh: `status=ACTIVE`, `family=<same>`
 7. Возвращает оба токена
 
-### 8. Logout с текущего устройства
+### 7. Logout с текущего устройства
 
 ```bash
 curl -X POST http://localhost:8888/auth/logout \
@@ -742,7 +728,7 @@ curl -X POST http://localhost:8888/auth/logout \
 3. Очищает cookie
 4. Текущий access токен продолжает работать до истечения (компромисс stateless)
 
-### 9. Logout со всех устройств
+### 8. Logout со всех устройств
 
 ```bash
 curl -X POST http://localhost:8888/auth/logout-all \
@@ -755,7 +741,7 @@ curl -X POST http://localhost:8888/auth/logout-all \
 3. Отзывает все refresh токены пользователя: `UPDATE refresh_tokens SET status='REVOKED' WHERE user_id=...`
 4. Все устройства пользователя больше не могут обновить access токены
 
-### 10. Проверка refresh токенов в БД
+### 9. Проверка refresh токенов в БД
 
 ```bash
 docker exec -it postgres psql -U admin -d auth_db -c \
@@ -774,7 +760,7 @@ docker exec -it postgres psql -U admin -d auth_db -c \
   3 |       1 | 789abcde-f012-3456... | abc-123-def-456 | USED    | 2025-03-02 09:00:00
 ```
 
-### 11. Тестирование rotation security
+### 10. Тестирование rotation security
 
 **Сценарий:** Злоумышленник украл старый refresh токен.
 
@@ -798,7 +784,7 @@ curl -X POST http://localhost:8888/auth/refresh \
 
 **Результат:** Легитимный пользователь тоже будет разлогинен и должен заново залогиниться. Это компромисс безопасности.
 
-### 12. Мониторинг метрик
+### 11. Мониторинг метрик
 
 ```bash
 # Метрики gateway
@@ -985,467 +971,3 @@ Gateway и другие сервисы периодически обновляю
 - Rotate ключи без перезапуска сервисов
 - Добавлять новые сервисы без шаринга секрета
 - Использовать разные алгоритмы подписи (RS256, ES256)
-
----
-
-## 🛡️ Security Considerations
-
-### 1. HTTPS в Production
-
-В демо используется HTTP для простоты. В production:
-- Nginx слушает на 443 с SSL/TLS сертификатом
-- `Secure` флаг в cookies (работает только через HTTPS)
-- HSTS (HTTP Strict Transport Security) header
-
-### 2. CORS настройка
-
-Если frontend на другом домене:
-```kotlin
-@Bean
-fun corsConfigurationSource(): CorsConfigurationSource {
-  val config = CorsConfiguration().apply {
-    allowedOrigins = listOf("https://app.example.com")
-    allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
-    allowedHeaders = listOf("Authorization", "Content-Type")
-    allowCredentials = true  // Для httpOnly cookies
-  }
-  
-  val source = UrlBasedCorsConfigurationSource()
-  source.registerCorsConfiguration("/**", config)
-  return source
-}
-```
-
-### 3. Защита от атак
-
-| Атака | Защита |
-|-------|--------|
-| **XSS** | Refresh в httpOnly cookie (JS не может прочитать) |
-| **CSRF** | SameSite=Lax cookie + короткий access в Authorization header |
-| **Token theft** | Короткий lifetime access токена (15 min) |
-| **Refresh theft** | Fingerprint binding + rotation + family revocation |
-| **Brute force** | Rate limiting в Nginx (5 login/min, 10 refresh/min) |
-| **Replay attack** | JWT exp + optional jti blacklist в Redis |
-
-### 4. Мобильные приложения
-
-Для мобильных клиентов:
-- Refresh токен в Keychain (iOS) / Keystore (Android)
-- Fingerprint = device ID (не IP, так как может меняться)
-- Опциональный device registration endpoint
-- Push notifications при подозрительной активности
-
----
-
-## 🚀 Расширения для Production
-
-### 1. OAuth2 / OIDC Integration
-
-Добавить социальный логин:
-- Google, GitHub, Facebook через Spring Security OAuth2 Client
-- Конвертация external token → internal JWT
-- Linking external accounts к user_id
-
-### 2. MFA (Multi-Factor Authentication)
-
-- TOTP (Time-based One-Time Password) через Google Authenticator
-- SMS/Email verification codes
-- Backup codes для восстановления доступа
-
-### 3. Password Reset Flow
-
-```
-POST /auth/forgot-password → отправка email с токеном
-POST /auth/reset-password?token=... → обновление пароля
-```
-
-### 4. Email Verification
-
-```
-POST /auth/register → отправка verification email
-GET /auth/verify?token=... → активация аккаунта
-```
-
-### 5. Device Management
-
-```
-GET /auth/devices → список устройств пользователя
-DELETE /auth/devices/{id} → logout с конкретного устройства
-```
-
-### 6. Audit Log
-
-Таблица для аудита:
-```sql
-CREATE TABLE auth_audit (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    action VARCHAR(100) NOT NULL,  -- LOGIN, REFRESH, LOGOUT
-    ip_address VARCHAR(50),
-    user_agent TEXT,
-    success BOOLEAN NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-```
-
-### 7. Distributed Tracing
-
-- Spring Cloud Sleuth для correlation ID
-- Zipkin/Jaeger для визуализации запросов через gateway → auth → resource
-
-### 8. Advanced Monitoring
-
-- Prometheus metrics:
-  - `auth_login_total{status="success|failure"}`
-  - `auth_refresh_total{status="success|failure"}`
-  - `auth_token_revoked_total{reason="logout|security_violation"}`
-  - `gateway_jwt_validation_duration_seconds`
-- Grafana dashboards для визуализации
-- Alerts на подозрительную активность (множественные failed logins, security violations)
-
----
-
-## 💡 Альтернативные подходы
-
-### Gateway: Spring Cloud Gateway vs Spring Boot + WebFlux
-
-**Spring Cloud Gateway:**
-- ✅ Готовая маршрутизация через конфиг/DSL
-- ✅ Встроенные фильтры (CircuitBreaker, RateLimiter, Retry)
-- ✅ Integration с Spring Security для WebFlux
-- ❌ Дополнительная зависимость на Spring Cloud
-
-**Spring Boot + WebFlux (текущий выбор):**
-- ✅ Минимум зависимостей
-- ✅ Полный контроль над маршрутизацией
-- ✅ Простота понимания кода
-- ❌ Нужно реализовать routing вручную
-
-### Refresh Token: Opaque vs JWT
-
-**Opaque UUID (текущий выбор):**
-- ✅ Требует обращение к БД → легко отозвать
-- ✅ Меньше информации в токене
-- ❌ Дополнительный запрос к БД при каждом refresh
-
-**JWT Refresh:**
-- ✅ Stateless, не требует БД для проверки
-- ❌ Сложнее отзыв (нужен blacklist для всех refresh токенов)
-- ❌ Больше информации в токене → больше риск при краже
-
-### Fingerprint: User-Agent + IP vs Device ID
-
-**User-Agent + IP (текущий выбор):**
-- ✅ Работает для веб-клиентов
-- ✅ Дополнительная защита
-- ❌ Динамический IP → ложные security violations
-
-**Device ID:**
-- ✅ Стабильный идентификатор для мобильных
-- ✅ Не зависит от сети
-- ❌ Требует device registration flow
-
-### JWT Algorithm: HS256 vs RS256
-
-**HS256 (симметричный, текущий выбор для demo):**
-- ✅ Проще настроить
-- ✅ Быстрее генерация и валидация
-- ❌ Один секрет для auth и gateway (нужно шарить)
-
-**RS256 (асимметричный, для production):**
-- ✅ Private key только у auth-service
-- ✅ Gateway и все сервисы используют public key
-- ✅ Можно добавлять новые сервисы без шаринга секретов
-- ✅ JWKS endpoint для автоматического обновления ключей
-- ❌ Медленнее генерация (RSA sign)
-
----
-
-## 🎓 Паттерны и Best Practices
-
-### 1. Separation of Concerns
-
-- **Auth Service** — только управление токенами и пользователями
-- **Gateway** — только валидация и маршрутизация
-- **Resource Services** — только бизнес-логика, доверяют gateway
-
-### 2. Defense in Depth
-
-Многоуровневая защита:
-- Nginx rate limiting
-- JWT signature validation
-- JWT expiration check
-- Refresh token status in DB
-- Fingerprint binding
-- Family revocation
-
-### 3. Fail Securely
-
-При ошибках валидации токена:
-- Возвращаем 401 Unauthorized
-- Не раскрываем причину ошибки клиенту (избегаем "invalid signature" vs "token expired")
-- Логируем подробности для мониторинга
-
-### 4. Stateless где возможно
-
-- Access токены — stateless (JWT)
-- Gateway — stateless (валидация локально)
-- Resource Services — stateless (доверяют заголовкам)
-
-Только Auth Service обращается к БД для refresh токенов.
-
-### 5. Graceful Degradation
-
-- Если Redis недоступен → blacklist не работает, но access токены продолжают валидироваться
-- Если PostgreSQL недоступен → существующие access токены работают, новые логины/refresh недоступны
-
----
-
-## 🔧 Production Checklist
-
-- [ ] Переключиться на RS256 с JWKS endpoint
-- [ ] Добавить HTTPS с Let's Encrypt / Cloud LB
-- [ ] Настроить CORS для frontend домена
-- [ ] Добавить distributed tracing (Sleuth + Zipkin)
-- [ ] Настроить Prometheus + Grafana dashboards
-- [ ] Реализовать audit log для всех auth операций
-- [ ] Добавить email verification при регистрации
-- [ ] Реализовать password reset flow
-- [ ] Добавить MFA (TOTP)
-- [ ] Настроить alerts на подозрительную активность
-- [ ] Load testing (Gatling/JMeter) для login/refresh эндпоинтов
-- [ ] Документировать key rotation процедуру
-- [ ] Настроить backup для PostgreSQL
-- [ ] Добавить health checks для всех зависимостей
-- [ ] Реализовать circuit breaker между компонентами
-
----
-
-## 🧪 Тестирование (рекомендуется)
-
-### Unit Tests
-
-```kotlin
-@Test
-fun `should generate valid access token`() {
-  val user = User(id = 1, username = "test", ...)
-  val token = jwtService.generateAccessToken(user)
-  val claims = jwtService.extractClaims(token).block()
-  
-  assertEquals("1", claims.subject)
-  assertEquals("test", claims["username"])
-}
-
-@Test
-fun `should rotate refresh token`() {
-  // Test rotation logic
-}
-
-@Test
-fun `should revoke token family on reuse`() {
-  // Test security violation detection
-}
-```
-
-### Integration Tests (Testcontainers)
-
-```kotlin
-@SpringBootTest
-@Testcontainers
-class AuthServiceIntegrationTest {
-  
-  @Container
-  val postgres = PostgreSQLContainer("postgres:15")
-  
-  @Container
-  val redis = GenericContainer("redis:7.2").apply {
-    withExposedPorts(6379)
-  }
-  
-  @Test
-  fun `full auth flow`() {
-    // register → login → refresh → logout
-  }
-}
-```
-
-### Load Testing
-
-```scala
-// Gatling scenario
-scenario("Auth Flow")
-  .exec(http("Login")
-    .post("/auth/login")
-    .body(StringBody("""{"username":"user1","password":"pass"}"""))
-    .check(status.is(200))
-    .check(jsonPath("$.accessToken").saveAs("accessToken"))
-  )
-  .pause(1)
-  .exec(http("Get Orders")
-    .get("/api/orders")
-    .header("Authorization", "Bearer ${accessToken}")
-    .check(status.is(200))
-  )
-```
-
----
-
-## 📚 Сравнение с другими подходами
-
-| Подход | Плюсы | Минусы | Use Case |
-|--------|-------|--------|----------|
-| **Session + Cookie** | Легко отозвать, простая реализация | Stateful, сложно масштабировать, CSRF | Монолиты, внутренние админки |
-| **JWT (один долгий)** | Stateless, масштабируется | Сложно отозвать, риск кражи | Простые API, короткие сессии |
-| **Access + Refresh (этот проект)** | Баланс: короткий access + отзываемый refresh | Сложнее реализация | Production микросервисы |
-| **OAuth2 / OIDC** | Стандарт, социальный логин, SSO | Большая сложность, внешние зависимости | Enterprise, B2B, мультитенантность |
-
----
-
-## 🔗 Интеграция с другими проектами портфолио
-
-### WebSocket Gateway Integration
-
-`websocket-gateway` уже использует JWT (Nimbus JOSE) для авторизации WebSocket соединений. Можно интегрировать:
-
-```kotlin
-// В websocket-gateway: использовать тот же JWT secret
-@Value("\${jwt.secret}")
-private lateinit var jwtSecret: String
-
-// При handshake валидировать JWT из auth-gateway
-val token = extractTokenFromQuery(request)
-val claims = jwtService.validate(token)  // Same signature
-val userId = claims.subject
-```
-
-**Преимущества:**
-- Единая система аутентификации для REST и WebSocket
-- Пользователь логинится один раз, получает доступ ко всем сервисам
-- WebSocket gateway может читать userId, roles из того же JWT
-
-### Transactional Outbox Integration
-
-При аутентификации можно публиковать события через outbox:
-
-```kotlin
-@Transactional
-fun login(username: String, password: String): Mono<TokenPair> {
-  return userRepository.findByUsername(username)
-    .flatMap { user ->
-      // Generate tokens
-      val tokens = generateTokens(user)
-      
-      // Publish event
-      outboxPublisher.publish(
-        partitioningKey = user.id.toString(),
-        eventType = "user.logged-in",
-        payload = mapOf("userId" to user.id, "timestamp" to LocalDateTime.now())
-      )
-      
-      Mono.just(tokens)
-    }
-}
-```
-
-**Use cases:**
-- Отправка welcome email при первом логине
-- Аналитика событий логина
-- Audit trail через event-driven подход
-
-### Distributed Task Scheduler Integration
-
-Можно добавить задачу для очистки expired refresh tokens:
-
-```kotlin
-@Component
-class CleanupExpiredTokensTask : Task {
-  override val taskName = "cleanupExpiredTokens"
-  
-  override fun execute(params: Map<String, Any>): Mono<Void> {
-    return refreshTokenRepository
-      .deleteByExpiresAtBeforeAndStatus(
-        LocalDateTime.now(), 
-        RefreshTokenStatus.USED
-      )
-      .then()
-  }
-}
-```
-
-Настройка в task-runner:
-```yaml
-scheduler:
-  tasks:
-    cleanupExpiredTokens:
-      cron: "0 0 2 * * ?"  # Каждый день в 2:00 AM
-      component: "auth-service"
-```
-
-### Dynamic Config Integration
-
-Настройки аутентификации можно динамически обновлять:
-
-```kotlin
-@Component
-class AuthConfig(
-  private val dynamicConfigStorage: DynamicConfigStorage
-) {
-  
-  fun getAccessTokenTtl(): Duration {
-    val minutes = dynamicConfigStorage.get("auth.access.ttl.minutes")?.toLong() ?: 15
-    return Duration.ofMinutes(minutes)
-  }
-  
-  fun getRefreshTokenTtl(): Duration {
-    val days = dynamicConfigStorage.get("auth.refresh.ttl.days")?.toLong() ?: 30
-    return Duration.ofDays(days)
-  }
-}
-```
-
-**Use cases:**
-- Увеличить TTL access токена для maintenance window
-- Временно отключить fingerprint binding при проблемах
-- Динамически менять rate limits
-
-### Client Notification Integration
-
-При логине/logout можно отправлять push-уведомления:
-
-```kotlin
-@Component
-class LoginNotificationHandler(
-  private val clientNotificationSender: ClientNotificationSender
-) {
-  
-  fun notifyLogin(userId: Long, device: String) {
-    clientNotificationSender.send(
-      DomainServerEvent(
-        type = "user.login.notification",
-        userId = userId,
-        payload = mapOf(
-          "message" to "New login from $device",
-          "timestamp" to LocalDateTime.now()
-        )
-      )
-    )
-  }
-}
-```
-
-**Use cases:**
-- Уведомления о подозрительных логинах
-- "You logged in from new device" alerts
-- Real-time security notifications
-
----
-
-## 📖 Ресурсы и спецификации
-
-- [RFC 7519 - JSON Web Token (JWT)](https://datatracker.ietf.org/doc/html/rfc7519)
-- [RFC 6749 - OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749)
-- [OWASP - JWT Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html)
-- [Spring Security Reference](https://docs.spring.io/spring-security/reference/index.html)
-- [Refresh Token Rotation](https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation)
-
----
