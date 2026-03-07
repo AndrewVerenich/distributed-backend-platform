@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+
+jwt:
+  secret: "MySecretKeyForJWTTokenGenerationAndValidation1234567890"
+
+routing:
+  auth-service: http://auth-service:8081
+  resource-service: http://resource-service:8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.andver.gateway: DEBUG
+    org.springframework.security: INFO

@@ -206,3 +206,27 @@ Capture), распределёнными транзакциями и други�
 - Debezium 2.5 (PostgreSQL Connector)
 - PostgreSQL
 - Docker Compose
+
+---
+
+### 11. [auth-gateway](./auth-gateway/README.md)
+Реализация JWT-based Authentication Gateway с access/refresh токенами, refresh token rotation и централизованной валидацией.
+
+**Описание:**
+- Auth Service для управления жизненным циклом токенов (login, refresh, logout).
+- Gateway Service как единая точка входа с JWT валидацией в Spring Security.
+- Access токены (15 мин) + Refresh токены (30 дней) с rotation при каждом обновлении.
+- Fingerprint binding для защиты от кражи refresh токенов (User-Agent + IP).
+- Token family tracking для обнаружения компрометации и автоматического отзыва.
+- Nginx как reverse proxy с rate limiting на критичные эндпоинты (login, refresh).
+- Хранение refresh токенов в PostgreSQL с отслеживанием статуса (ACTIVE/USED/REVOKED).
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Security
+- JJWT (JWT generation/parsing)
+- PostgreSQL
+- Redis (optional blacklist)
+- Nginx (rate limiting)
+- Docker Compose

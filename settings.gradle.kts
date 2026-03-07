@@ -31,6 +31,10 @@ include(
   "websocket-gateway:client-notification-consumer-starter",
   "websocket-gateway:simple-payment-microservice",
 
+  "auth-gateway:gateway-service",
+  "auth-gateway:auth-service",
+  "auth-gateway:resource-service",
+
   "unique-id-generator:unique-id-generator",
   "unique-id-generator:simple-client",
 
