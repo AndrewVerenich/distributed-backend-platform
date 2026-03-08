@@ -215,7 +215,7 @@ Capture), распределёнными транзакциями и други�
 **Описание:**
 - Auth Service для управления жизненным циклом токенов (login, refresh, logout).
 - Gateway Service как единая точка входа с JWT валидацией в Spring Security.
-- Access токены (15 мин) + Refresh токены (30 дней) с rotation при каждом обновлении.
+- Access токены + Refresh токены с rotation при каждом обновлении.
 - Fingerprint binding для защиты от кражи refresh токенов (User-Agent + IP).
 - Token family tracking для обнаружения компрометации и автоматического отзыва.
 - Nginx как reverse proxy с rate limiting на критичные эндпоинты (login, refresh).
