@@ -1,0 +1,9 @@
+jwt:
+  secret: "IntegrationTestSecretKeyAtLeast32BytesLong!!!!!!"
+  access-expiration: "PT15M"
+  refresh-expiration: "P30D"
+
+logging:
+  level:
+    com.andver.auth: DEBUG
+    org.testcontainers: INFO

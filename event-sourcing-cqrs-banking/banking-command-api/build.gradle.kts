@@ -22,5 +22,9 @@ dependencies {
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
   implementation(project(":event-sourcing-cqrs-banking:banking-domain"))
+
+  testImplementation("org.testcontainers:junit-jupiter:1.19.3")
+  testImplementation("org.testcontainers:postgresql:1.19.3")
+  testImplementation("org.testcontainers:r2dbc:1.19.3")
 }
 

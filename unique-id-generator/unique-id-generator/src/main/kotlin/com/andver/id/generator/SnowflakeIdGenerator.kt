@@ -3,7 +3,6 @@ package com.andver.id.generator
 import com.netflix.discovery.EurekaClient
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.abs
 
 interface IdGenerator {
@@ -32,39 +31,33 @@ class SnowflakeIdGenerator(
   private val datacenterIdShift = sequenceBits + workerIdBits
   private val timestampLeftShift = sequenceBits + workerIdBits + datacenterIdBits
 
-  private val lastTimestamp = AtomicLong(-1L)
-  private val sequence = AtomicLong(0L)
+  private var lastTimestamp: Long = -1L
+  private var sequence: Long = 0L
 
   init {
     require(workerId in 0..maxWorkerId) { "workerId out of range" }
     require(datacenterId in 0..maxDatacenterId) { "datacenterId out of range" }
   }
 
+  @Synchronized
   override fun generateId(): Long {
-    while (true) {
-      var timestamp = timeGen()
-      val lastTs = lastTimestamp.get()
+    var timestamp = timeGen()
 
-      if (timestamp < lastTs) {
-        throw RuntimeException("Clock moved backwards. Refusing to generate id")
-      }
-
-      if (timestamp == lastTs) {
-        val seq = (sequence.incrementAndGet()) and sequenceMask
-        if (seq == 0L) {
-          timestamp = tilNextMillis(lastTs)
-          sequence.set(0)
-        }
-        if (lastTimestamp.compareAndSet(lastTs, timestamp)) {
-          return assembleId(timestamp, seq)
-        }
-      } else {
-        sequence.set(0)
-        if (lastTimestamp.compareAndSet(lastTs, timestamp)) {
-          return assembleId(timestamp, 0)
-        }
-      }
+    if (timestamp < lastTimestamp) {
+      throw RuntimeException("Clock moved backwards. Refusing to generate id")
     }
+
+    if (timestamp == lastTimestamp) {
+      sequence = (sequence + 1) and sequenceMask
+      if (sequence == 0L) {
+        timestamp = tilNextMillis(lastTimestamp)
+      }
+    } else {
+      sequence = 0L
+    }
+
+    lastTimestamp = timestamp
+    return assembleId(timestamp, sequence)
   }
 
   private fun assembleId(timestamp: Long, seq: Long): Long {
