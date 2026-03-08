@@ -1,21 +1,31 @@
 package com.andver.auth.service.controller
 
-import com.andver.auth.service.model.*
+import com.andver.auth.service.model.LoginRequest
+import com.andver.auth.service.model.LoginResponse
+import com.andver.auth.service.model.MessageResponse
+import com.andver.auth.service.model.RefreshResponse
+import com.andver.auth.service.model.RegisterRequest
+import com.andver.auth.service.model.ValidateResponse
+import com.andver.auth.service.properties.JwtProperties
 import com.andver.auth.service.service.AuthService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.http.server.reactive.ServerHttpRequest
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
-import java.time.Duration
 
 @RestController
 @RequestMapping("/auth")
 class AuthController(
-  private val authService: AuthService
+  private val authService: AuthService,
+  private val jwtProperties: JwtProperties,
 ) {
   private val log = LoggerFactory.getLogger(AuthController::class.java)
 
@@ -25,7 +35,9 @@ class AuthController(
       .map { ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse("User registered successfully")) }
       .onErrorResume {
         log.error("Registration failed: ${it.message}")
-        Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MessageResponse(it.message ?: "Registration failed")))
+        Mono.just(
+          ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MessageResponse(it.message ?: "Registration failed"))
+        )
       }
   }
 
@@ -41,7 +53,7 @@ class AuthController(
           .httpOnly(true)
           .secure(false)
           .path("/")
-          .maxAge(Duration.ofDays(30))
+          .maxAge(jwtProperties.refreshExpiration)
           .sameSite("Lax")
           .build()
 
@@ -74,7 +86,7 @@ class AuthController(
           .httpOnly(true)
           .secure(false)
           .path("/")
-          .maxAge(Duration.ofDays(30))
+          .maxAge(jwtProperties.refreshExpiration)
           .sameSite("Lax")
           .build()
 
