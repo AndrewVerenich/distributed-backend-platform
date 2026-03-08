@@ -1,0 +1,4 @@
+logging:
+  level:
+    com.andver.banking: DEBUG
+    org.testcontainers: INFO
