@@ -16,23 +16,23 @@
 
 ```mermaid
 flowchart LR
-    P[view-event-producer\n20 users × 50 videos] -->|VideoViewEvent\nvideo-view topic| K[(Kafka\n4 partitions)]
+    P[view-event-producer 20 users × 50 videos] -->|VideoViewEvent video-view topic| K[(Kafka 4 partitions)]
 
-    K --> A1[counter-aggregator-1\nKafka Streams]
-    K --> A2[counter-aggregator-2\nKafka Streams]
+    K --> A1[counter-aggregator-1 Kafka Streams]
+    K --> A2[counter-aggregator-2 Kafka Streams]
 
-    A1 -->|VideoViewCountMessage\nwindow=10s| C[(video-view-counts\ntopic)]
-    A2 -->|VideoViewCountMessage\nwindow=10s| C
+    A1 -->|VideoViewCountMessage window=10s| C[(video-view-counts topic)]
+    A2 -->|VideoViewCountMessage window=10s| C
 
-    K -->|raw events\ngroup: counter-service-unique| S[counter-service]
-    C -->|windowed counts\ngroup: counter-service-counts| S
+    K -->|raw events group: counter-service-unique| S[counter-service]
+    C -->|windowed counts group: counter-service-counts| S
 
-    S -->|INCRBY delta\nrandom shard| R[(Redis\nvideo:id:views:shard:0..7)]
-    S -->|PFADD userId| H[(Redis\nHyperLogLog\nvideo:id:unique-viewers)]
-    S -->|flush every 30s| DB[(PostgreSQL\nvideo_view_counts)]
+    S -->|INCRBY delta random shard| R[(Redis video:id:views:shard:0..7)]
+    S -->|PFADD userId| H[(Redis HyperLogLog video:id:unique-viewers)]
+    S -->|flush every 30s| DB[(PostgreSQL video_view_counts)]
 
     Client -->|GET /counters/videoId| S
-    S -->|MGET 8 shards\n+ PFCOUNT| R
+    S -->|MGET 8 shards + PFCOUNT| R
 ```
 
 ---
