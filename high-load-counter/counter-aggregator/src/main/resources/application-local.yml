@@ -1,0 +1,13 @@
+video-view:
+  input-topic: video-view
+  output-topic: video-view-counts
+  window-size: "PT10S"
+  grace-period: "PT2S"
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    streams:
+      application-id: counter-aggregator
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$LongSerde
+        default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
