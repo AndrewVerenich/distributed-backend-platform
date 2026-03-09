@@ -230,3 +230,26 @@ Capture), распределёнными транзакциями и други�
 - Redis (optional blacklist)
 - Nginx (rate limiting)
 - Docker Compose
+
+---
+
+### 12. [high-load-counter](./high-load-counter/README.md)
+Реализация высоконагруженной системы подсчёта просмотров видео с шардированными счётчиками в Redis и windowed aggregation через Kafka Streams.
+
+**Описание:**
+- Буферизация событий просмотра через Kafka — поглощение пиковых нагрузок без потери данных.
+- Windowed aggregation (Kafka Streams) — tumbling windows с grace period для сокращения записей в Redis.
+- Sharded counter в Redis — 8 шардов на видео для устранения hot key при высоком throughput.
+- HyperLogLog для подсчёта уникальных зрителей — ~12 KB на видео вместо сотен МБ для SET.
+- Периодический flush в PostgreSQL для долговременного хранения.
+- REST API: `GET /counters/{videoId}`, `POST /counters/{videoId}/view`.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Kafka / Kafka Streams
+- Spring Data Redis (Reactive)
+- Apache Kafka
+- Redis 7.2
+- PostgreSQL
+- Docker Compose

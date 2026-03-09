@@ -50,4 +50,8 @@ include(
   "event-sourcing-cqrs-banking:banking-command-api",
   "event-sourcing-cqrs-banking:banking-query-api",
   "event-sourcing-cqrs-banking:projection-balance",
+
+  "high-load-counter:view-event-producer",
+  "high-load-counter:counter-aggregator",
+  "high-load-counter:counter-service",
 )

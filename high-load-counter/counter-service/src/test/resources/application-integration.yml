@@ -1,0 +1,12 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  r2dbc:
+    url: placeholder
+    username: placeholder
+    password: placeholder
+  data:
+    redis:
+      host: placeholder
+      port: 6379
