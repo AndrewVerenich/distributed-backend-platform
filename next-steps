@@ -1,10 +1,6 @@
-rsocket-gateway
-grpc-gateway
 lock-manager
 saga-orchestrator
 api-gateway, rate limiter, circuit breaker
 A/B testing
 performance testing
-distributed Deadlock Detection — обнаружение deadlock'ов
-high load counter
 consistent hashing
