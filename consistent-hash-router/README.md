@@ -102,7 +102,7 @@ curl -i -X POST http://localhost:8080/route/42 -d '{"event":"b"}'
 ```bash
 curl http://localhost:8080/admin/nodes
 curl http://localhost:8080/admin/ring/stats
-curl "http://localhost:8080/admin/ring/lookup?key=42"
+curl http://localhost:8080/admin/ring/lookup?key=42
 ```
 
 ## Стек
