@@ -3,17 +3,16 @@ server:
 
 router:
   virtual-nodes-per-node: 150
-  health-check-enabled: true
-  health-check-delay-ms: 5000
-  health-check-timeout-ms: 1000
-  failure-threshold: 3
-  nodes:
-    - id: backend-1
-      host: localhost
-      port: 8081
-    - id: backend-2
-      host: localhost
-      port: 8082
-    - id: backend-3
-      host: localhost
-      port: 8083
+  backend-service-name: ${ROUTER_BACKEND_SERVICE_NAME:stateful-backend}
+  sync-interval-ms: ${ROUTER_SYNC_INTERVAL_MS:10000}
+
+spring:
+  application:
+    name: hash-router
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: false

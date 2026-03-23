@@ -1,5 +1,21 @@
 server:
   port: 8081
 
+spring:
+  application:
+    name: stateful-backend
+
 backend:
   id: backend-1
+
+eureka:
+  instance:
+    instance-id: ${backend.id}:${server.port}
+    metadata-map:
+      backendId: ${backend.id}
+      weight: ${BACKEND_WEIGHT:1}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: false
