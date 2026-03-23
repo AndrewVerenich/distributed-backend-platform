@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+router:
+  virtual-nodes-per-node: 150
+  health-check-enabled: true
+  health-check-delay-ms: 5000
+  health-check-timeout-ms: 1000
+  failure-threshold: 3
+  nodes:
+    - id: backend-1
+      host: localhost
+      port: 8081
+    - id: backend-2
+      host: localhost
+      port: 8082
+    - id: backend-3
+      host: localhost
+      port: 8083

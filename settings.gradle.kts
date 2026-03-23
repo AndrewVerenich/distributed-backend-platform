@@ -54,4 +54,7 @@ include(
   "high-load-counter:view-event-producer",
   "high-load-counter:counter-aggregator",
   "high-load-counter:counter-service",
+
+  "consistent-hash-router:hash-router-service",
+  "consistent-hash-router:simple-backend-service",
 )

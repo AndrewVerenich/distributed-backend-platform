@@ -253,3 +253,22 @@ Capture), распределёнными транзакциями и други�
 - Redis 7.2
 - PostgreSQL
 - Docker Compose
+
+---
+
+### 13. [consistent-hash-router](./consistent-hash-router/README.md)
+Реализация компонента маршрутизации HTTP-запросов по алгоритму Consistent Hashing для стабильного key-based routing в распределённых системах.
+
+**Описание:**
+- Маршрутизация запросов на backend-ноды по `routingKey` через consistent hash ring.
+- Виртуальные ноды для более равномерного распределения ключей.
+- Минимальное перераспределение ключей при добавлении/удалении ноды.
+- Health-check нод и автоматическое исключение недоступных backend-инстансов из кольца.
+- Admin API для диагностики ring и проверки маршрутизации конкретного ключа.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, Scheduling)
+- Reactor WebClient
+- MockWebServer (integration tests)
+- Docker Compose
