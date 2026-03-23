@@ -26,7 +26,7 @@
 ```mermaid
 flowchart LR
     Client -->|"POST /route/{routingKey}"| Router[hash-router-service]
-    Router -->|hash(routingKey)| Ring["ConsistentHashRing + virtualNodes"]
+    Router -->|hash of routingKey| Ring["ConsistentHashRing + virtualNodes"]
     Ring -->|lookup| Backend1[backend-1]
     Ring -->|lookup| Backend2[backend-2]
     Ring -->|lookup| Backend3[backend-3]
