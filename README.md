@@ -263,12 +263,13 @@ Capture), распределёнными транзакциями и други�
 - Маршрутизация запросов на backend-ноды по `routingKey` через consistent hash ring.
 - Виртуальные ноды для более равномерного распределения ключей.
 - Минимальное перераспределение ключей при добавлении/удалении ноды.
-- Health-check нод и автоматическое исключение недоступных backend-инстансов из кольца.
+- Service discovery через Eureka: backend-инстансы регистрируются динамически, а роутер синхронизирует состав ring из реестра.
 - Admin API для диагностики ring и проверки маршрутизации конкретного ключа.
 
 **Стек:**
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux, Scheduling)
+- Spring Cloud Netflix Eureka Client
 - Reactor WebClient
 - MockWebServer (integration tests)
 - Docker Compose
