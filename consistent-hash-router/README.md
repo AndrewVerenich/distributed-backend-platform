@@ -30,9 +30,11 @@ flowchart LR
     Ring -->|lookup| Backend1[backend-1]
     Ring -->|lookup| Backend2[backend-2]
     Ring -->|lookup| Backend3[backend-3]
-    Health["NodeHealthChecker"] -->|"/health"| Backend1
-    Health -->|"/health"| Backend2
-    Health -->|"/health"| Backend3
+    Discovery["NodeHealthChecker"] -->|sync from Eureka| Ring
+    Backend1 -->|register| Eureka[Eureka Server]
+    Backend2 -->|register| Eureka
+    Backend3 -->|register| Eureka
+    Router -->|fetch instances| Eureka
 ```
 
 ```mermaid
@@ -45,24 +47,39 @@ flowchart LR
 
 ## Архитектура
 
-- `hash-router-service` — основной роутер, consistent hash ring, health-check, admin API
+- `hash-router-service` — основной роутер, consistent hash ring, sync с Eureka, admin API
 - `simple-backend-service` — простой backend для демонстрации маршрутизации
-- `docker-compose.yml` — поднимает роутер и 3 backend-инстанса
+- `docker-compose.yml` — поднимает Eureka, роутер и 3 backend-инстанса
 
 Ключевые компоненты:
 
 - `ConsistentHashRing` — `ConcurrentSkipListMap`, виртуальные ноды, поиск через `ceilingEntry`
 - `MurmurHash3Function` — быстрая детерминированная хеш-функция
-- `NodeRegistry` — статус нод, failure counters, add/remove из ring
-- `NodeHealthChecker` — периодический health-check с авто-исключением нерабочих нод
+- `NodeRegistry` — хранение активных backend-нод и add/remove из ring
+- `NodeHealthChecker` — периодическая синхронизация состава нод из Eureka
 - `RequestRouter` — proxy-запрос на выбранную ноду + заголовок `X-Routed-To`
 
 ## API
 
 - `POST /route/{routingKey}` — маршрутизация запроса в backend
-- `GET /admin/nodes` — статусы нод и число последовательных ошибок
+- `GET /admin/nodes` — список текущих нод, которые участвуют в ring
 - `GET /admin/ring/stats` — число виртуальных нод на каждый backend
 - `GET /admin/ring/lookup?key=user-42` — debug lookup по ключу
+
+## Конфигурация
+
+`hash-router-service`:
+
+- `router.virtual-nodes-per-node` — число виртуальных нод на backend (по умолчанию `150`)
+- `router.backend-service-name` — имя сервиса в Eureka (по умолчанию `stateful-backend`)
+- `router.sync-interval-ms` — период синхронизации состава нод из Eureka (по умолчанию `10000`)
+- `eureka.client.service-url.defaultZone` — адрес Eureka
+
+`simple-backend-service`:
+
+- `backend.id` — id backend-инстанса (используется в ответах и metadata)
+- `eureka.instance.metadata-map.backendId` — id ноды для роутера
+- `eureka.instance.metadata-map.weight` — вес ноды для виртуальных реплик (по умолчанию `1`)
 
 ## Тесты
 
@@ -70,8 +87,8 @@ flowchart LR
   - равномерность распределения
   - ограниченное перераспределение при add/remove нод
   - стабильность при единственной ноде
-- `RequestRouterIntegrationTest` (`@Tag("integration")`):
-  - один и тот же ключ стабильно роутится в одну и ту же ноду
+
+Интеграционные сценарии можно проверять через `docker-compose` и admin endpoints.
 
 ## Демо
 
@@ -88,7 +105,13 @@ flowchart LR
 docker-compose -f consistent-hash-router/docker-compose.yml up --build
 ```
 
-3) Проверить sticky-routing:
+3) Проверить, что backend-ноды появились в Eureka:
+
+```bash
+curl http://localhost:8761/actuator/health
+```
+
+4) Проверить sticky-routing:
 
 ```bash
 curl -i -X POST http://localhost:8080/route/42 -d '{"event":"a"}'
@@ -97,7 +120,7 @@ curl -i -X POST http://localhost:8080/route/42 -d '{"event":"b"}'
 
 В ответе будет заголовок `X-Routed-To` — для одинакового `routingKey` он должен быть одинаковым.
 
-4) Диагностика ring:
+5) Диагностика ring:
 
 ```bash
 curl http://localhost:8080/admin/nodes
@@ -109,6 +132,7 @@ curl http://localhost:8080/admin/ring/lookup?key=42
 
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux, Scheduling, Configuration Properties)
+- Spring Cloud Netflix Eureka Client
 - Reactor WebClient
 - MockWebServer (integration tests)
 - Docker Compose
