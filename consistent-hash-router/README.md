@@ -37,7 +37,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    Key["routingKey=user-42"] --> Hash["MurmurHash3"]
+    Key["routingKey=42"] --> Hash["MurmurHash3"]
     Hash --> Position["position on ring"]
     Position --> Ceiling["ceilingEntry(position)"]
     Ceiling --> Node["target backend node"]
