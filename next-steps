@@ -3,5 +3,5 @@ saga-orchestrator
 api-gateway, rate limiter, circuit breaker
 A/B testing
 performance testing
-consistent hashing
-custom db sharding
+grpc + protobuf
+bff
