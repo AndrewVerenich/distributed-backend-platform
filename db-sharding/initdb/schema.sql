@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS user_profile (
+  id UUID PRIMARY KEY,
+  user_id VARCHAR(128) NOT NULL UNIQUE,
+  name VARCHAR(256) NOT NULL,
+  email VARCHAR(256) NOT NULL,
+  created_at TIMESTAMP NOT NULL
+);
+

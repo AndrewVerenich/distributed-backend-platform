@@ -57,4 +57,7 @@ include(
 
   "consistent-hash-router:hash-router-service",
   "consistent-hash-router:simple-backend-service",
+
+  "db-sharding:sharding-starter",
+  "db-sharding:simple-user-service",
 )

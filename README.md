@@ -273,3 +273,20 @@ Capture), распределёнными транзакциями и други�
 - Reactor WebClient
 - MockWebServer (integration tests)
 - Docker Compose
+
+---
+
+### 14. [db-sharding](./db-sharding/README.md)
+Демо проекта по **прозрачному application-level шардированию PostgreSQL**: клиентский сервис работает с единым репозиторием, а конкретный шард выбирается автоматически по `userId`.
+
+**Описание:**
+- Routing операций CRUD на нужный shard через Reactor Context
+- Scatter-gather для “поиска по имени” по всем шардам
+- Starter-подход: шардинг подключается как библиотека
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Cloud (Spring R2DBC routing)
+- PostgreSQL
+- Docker Compose
