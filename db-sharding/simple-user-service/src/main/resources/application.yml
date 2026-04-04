@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: simple-user-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+sharding:
+  default-shard: ${SHARD_DEFAULT:shard-0}
+  shards:
+    - name: shard-0
+      host: ${SHARD_0_HOST:shard-0}
+      port: ${SHARD_0_PORT:5432}
+      database: ${SHARD_DB:sharding_db}
+      username: ${SHARD_USERNAME:postgres}
+      password: ${SHARD_PASSWORD:postgres}
+    - name: shard-1
+      host: ${SHARD_1_HOST:shard-1}
+      port: ${SHARD_1_PORT:5432}
+      database: ${SHARD_DB:sharding_db}
+      username: ${SHARD_USERNAME:postgres}
+      password: ${SHARD_PASSWORD:postgres}
+    - name: shard-2
+      host: ${SHARD_2_HOST:shard-2}
+      port: ${SHARD_2_PORT:5432}
+      database: ${SHARD_DB:sharding_db}
+      username: ${SHARD_USERNAME:postgres}
+      password: ${SHARD_PASSWORD:postgres}
+
