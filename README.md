@@ -7,6 +7,29 @@ Capture), распределёнными транзакциями и други�
 
 Каждый проект представляет собой полноценное решение с использованием современных технологий и best practices, готовое к использованию в production-окружении.
 
+## Содержание: проекты
+
+Краткий список — ссылки ведут к полному описанию в [разделе ниже](#projects-overview).
+
+1. [dynamic-application-config](#1-dynamic-application-config) — динамические конфигурации, CDC (Debezium), Kafka Streams  
+2. [cdc-application-events-engine](#2-cdc-application-events-engine) — CDC, Apache Camel, eventual consistency  
+3. [realtime-trends](#3-realtime-trends) — рекомендации и тренды в реальном времени, Kafka Streams, ksqlDB  
+4. [distributed-task-scheduler](#4-distributed-task-scheduler) — расписание задач, Redis, Kafka  
+5. [transactional-outbox-engine](#5-transactional-outbox-engine) — transactional outbox, Debezium, Kafka  
+6. [websocket-gateway](#6-websocket-gateway) — WebSocket gateway, Redis Pub/Sub, Kafka  
+7. [unique-id-generator](#7-unique-id-generator) — Snowflake ID, Eureka  
+8. [client-request-deduplicator](#8-client-request-deduplicator) — дедупликация HTTP-запросов, Redis  
+9. [time-service](#9-time-service) — компенсация clock skew  
+10. [event-sourcing-cqrs-banking](#10-event-sourcing-cqrs-banking) — event sourcing, CQRS, temporal queries  
+11. [auth-gateway](#11-auth-gateway) — JWT, refresh rotation, gateway  
+12. [high-load-counter](#12-high-load-counter) — высоконагруженные счётчики, Kafka Streams, Redis  
+13. [consistent-hash-router](#13-consistent-hash-router) — consistent hashing, Eureka  
+14. [db-sharding](#14-db-sharding) — application-level шардирование PostgreSQL, R2DBC  
+
+---
+
+<a id="projects-overview"></a>
+
 ## 📂 Проекты
 
 ### 1. [dynamic-application-config](./dynamic-application-config/README.md)
