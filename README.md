@@ -25,6 +25,7 @@ Capture), распределёнными транзакциями и други�
 12. [high-load-counter](#12-high-load-counter) — высоконагруженные счётчики, Kafka Streams, Redis  
 13. [consistent-hash-router](#13-consistent-hash-router) — consistent hashing, Eureka  
 14. [db-sharding](#14-db-sharding) — application-level шардирование PostgreSQL, R2DBC  
+15. [bff-gateway](#15-bff-gateway) — BFF, Spring Cloud Gateway, Redis rate limit  
 
 ---
 
@@ -312,4 +313,21 @@ Capture), распределёнными транзакциями и други�
 - Spring Boot 3 (WebFlux, R2DBC)
 - Spring Cloud (Spring R2DBC routing)
 - PostgreSQL
+- Docker Compose
+
+---
+
+### 15. [bff-gateway](./bff-gateway/README.md)
+Реализация паттерна **Backend for Frontend**: три BFF (web, mobile, admin) за **Spring Cloud Gateway** с rate limiting (Redis), circuit breaker и сквозным **X-Correlation-Id**.
+
+**Описание:**
+- Маршрутизация `/web/**`, `/mobile/**`, `/admin/**` на отдельные BFF с `StripPrefix`.
+- Агрегация и трансформация ответов из внутренних `user-service` и `product-service` (WebFlux + WebClient).
+- Resilience4j на уровне gateway и BFF; демо-данные в одной БД PostgreSQL.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Cloud Gateway, Resilience4j
+- PostgreSQL, Redis
 - Docker Compose

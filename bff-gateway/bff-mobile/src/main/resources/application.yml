@@ -1,0 +1,40 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: bff-mobile
+
+bff:
+  backend:
+    user-service-base-url: ${USER_SERVICE_URL:http://localhost:8091}
+    product-service-base-url: ${PRODUCT_SERVICE_URL:http://localhost:8092}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+    instances:
+      mobileFeed:
+        baseConfig: default
+      mobileProductsCursor:
+        baseConfig: default
+      mobileProductById:
+        baseConfig: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.andver.bff.mobile: DEBUG

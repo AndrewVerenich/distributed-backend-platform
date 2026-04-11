@@ -1,0 +1,147 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: bff-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: bff_db
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d bff_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2
+    container_name: bff-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    build:
+      context: ./user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:5432/bff_db
+      - SPRING_R2DBC_USERNAME=admin
+      - SPRING_R2DBC_PASSWORD=admin
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8091/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  product-service:
+    build:
+      context: ./product-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:5432/bff_db
+      - SPRING_R2DBC_USERNAME=admin
+      - SPRING_R2DBC_PASSWORD=admin
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8092/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  bff-web:
+    build:
+      context: ./bff-web
+    depends_on:
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    environment:
+      - USER_SERVICE_URL=http://user-service:8091
+      - PRODUCT_SERVICE_URL=http://product-service:8092
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  bff-mobile:
+    build:
+      context: ./bff-mobile
+    depends_on:
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    environment:
+      - USER_SERVICE_URL=http://user-service:8091
+      - PRODUCT_SERVICE_URL=http://product-service:8092
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8082/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  bff-admin:
+    build:
+      context: ./bff-admin
+    depends_on:
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    environment:
+      - USER_SERVICE_URL=http://user-service:8091
+      - PRODUCT_SERVICE_URL=http://product-service:8092
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8083/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    depends_on:
+      redis:
+        condition: service_healthy
+      bff-web:
+        condition: service_healthy
+      bff-mobile:
+        condition: service_healthy
+      bff-admin:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GATEWAY_BFF_WEB_URI=http://bff-web:8081
+      - GATEWAY_BFF_MOBILE_URI=http://bff-mobile:8082
+      - GATEWAY_BFF_ADMIN_URI=http://bff-admin:8083
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

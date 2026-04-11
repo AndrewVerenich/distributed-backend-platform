@@ -1,0 +1,90 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      routes:
+        - id: bff-web
+          uri: ${GATEWAY_BFF_WEB_URI:http://localhost:8081}
+          predicates:
+            - Path=/web/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Client-Type, web
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 150
+                key-resolver: "#{@routeAwareRateLimitKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: bffWeb
+                fallbackUri: forward:/fallback/web
+        - id: bff-mobile
+          uri: ${GATEWAY_BFF_MOBILE_URI:http://localhost:8082}
+          predicates:
+            - Path=/mobile/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Client-Type, mobile
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 80
+                key-resolver: "#{@routeAwareRateLimitKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: bffMobile
+                fallbackUri: forward:/fallback/mobile
+        - id: bff-admin
+          uri: ${GATEWAY_BFF_ADMIN_URI:http://localhost:8083}
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Client-Type, admin
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 200
+                redis-rate-limiter.burstCapacity: 300
+                key-resolver: "#{@routeAwareRateLimitKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: bffAdmin
+                fallbackUri: forward:/fallback/admin
+    circuitbreaker:
+      resilience4j:
+        config:
+          default:
+            slidingWindowSize: 10
+            minimumNumberOfCalls: 5
+            failureRateThreshold: 50
+            waitDurationInOpenState: 10s
+        instances:
+          bffWeb:
+            baseConfig: default
+          bffMobile:
+            baseConfig: default
+          bffAdmin:
+            baseConfig: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.andver.bff.gateway: DEBUG
