@@ -1,8 +1,5 @@
-lock-manager
 saga-orchestrator
-api-gateway, rate limiter, circuit breaker
 A/B testing
 performance testing
 grpc + protobuf
-bff
 observability
