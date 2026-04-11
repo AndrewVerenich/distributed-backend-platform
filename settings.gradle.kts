@@ -60,4 +60,11 @@ include(
 
   "db-sharding:sharding-starter",
   "db-sharding:simple-user-service",
+
+  "bff-gateway:api-gateway",
+  "bff-gateway:bff-web",
+  "bff-gateway:bff-mobile",
+  "bff-gateway:bff-admin",
+  "bff-gateway:user-service",
+  "bff-gateway:product-service",
 )
