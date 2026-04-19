@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: travel-car-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: earliest
+
+saga:
+  participant:
+    enabled: true
+    command-topic: saga.command.car-service
+    reply-topic: saga.reply

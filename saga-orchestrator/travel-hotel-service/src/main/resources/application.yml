@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: travel-hotel-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: earliest
+
+saga:
+  participant:
+    enabled: true
+    command-topic: saga.command.hotel-service
+    reply-topic: saga.reply
