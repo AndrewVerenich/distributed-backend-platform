@@ -67,4 +67,11 @@ include(
   "bff-gateway:bff-admin",
   "bff-gateway:user-service",
   "bff-gateway:product-service",
+
+  "saga-orchestrator:saga-model",
+  "saga-orchestrator:saga-orchestrator-engine",
+  "saga-orchestrator:saga-participant-starter",
+  "saga-orchestrator:travel-flight-service",
+  "saga-orchestrator:travel-hotel-service",
+  "saga-orchestrator:travel-car-service",
 )

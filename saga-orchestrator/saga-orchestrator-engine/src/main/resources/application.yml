@@ -1,0 +1,30 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: saga-orchestrator-engine
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/master
+    username: postgres
+    password: postgres
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: saga-orchestrator
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+
+saga:
+  timeout:
+    check-seconds: 30
+    check-interval-ms: 10000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  metrics:
+    tags:
+      application: saga-orchestrator

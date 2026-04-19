@@ -26,6 +26,7 @@ Capture), распределёнными транзакциями и други�
 13. [consistent-hash-router](#13-consistent-hash-router) — consistent hashing, Eureka  
 14. [db-sharding](#14-db-sharding) — application-level шардирование PostgreSQL, R2DBC  
 15. [bff-gateway](#15-bff-gateway) — BFF, Spring Cloud Gateway, Redis rate limit  
+16. [saga-orchestrator](#16-saga-orchestrator) — orchestrated saga, SEC модель, Kafka, Kotlin DSL, React Dashboard  
 
 ---
 
@@ -330,4 +331,28 @@ Capture), распределёнными транзакциями и други�
 - Spring Boot 3 (WebFlux, R2DBC)
 - Spring Cloud Gateway, Resilience4j
 - PostgreSQL, Redis
+- Docker Compose
+
+---
+
+### 16. [saga-orchestrator](./saga-orchestrator/README.md)
+Реализация паттерна **Orchestrated Saga** с моделью **SEC (Compensable → Pivot → Retryable)** для управления распределёнными транзакциями в микросервисной архитектуре.
+
+**Описание:**
+- Централизованный оркестратор саг с Kotlin DSL для декларативного определения шагов.
+- SEC модель из книги *"Microservices Patterns"*: Compensable → Pivot → Retryable транзакции.
+- Координация через Apache Kafka (command/reply pattern).
+- Хранение состояния каждого шага в PostgreSQL (saga_instance + saga_step).
+- Spring Boot Starter для plug-and-play интеграции сервисов-участников.
+- React Dashboard с real-time обновлениями через SSE.
+- Grafana + Prometheus для мониторинга метрик саг.
+- Демо: Travel Booking (Flight → Hotel → Car) с компенсацией и ретраями.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Apache Kafka
+- PostgreSQL
+- React 18 / TypeScript / Tailwind CSS
+- Micrometer / Prometheus / Grafana
 - Docker Compose
