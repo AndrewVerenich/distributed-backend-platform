@@ -28,3 +28,6 @@ management:
   metrics:
     tags:
       application: saga-orchestrator
+    distribution:
+      percentiles-histogram:
+        saga.step.duration.seconds: true

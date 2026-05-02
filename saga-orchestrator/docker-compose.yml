@@ -88,7 +88,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     restart: on-failure
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8090/actuator/health" ]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health >/dev/null || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3

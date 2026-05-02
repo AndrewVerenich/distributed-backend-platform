@@ -38,15 +38,16 @@ class SagaOrchestrator(
 
     log.info("Starting saga [{}] id={}", sagaType, sagaId)
 
-    val instance = SagaInstanceEntity(
+    val now = LocalDateTime.now()
+    return instanceRepository.insertWithJsonb(
       sagaId = sagaId,
       sagaType = sagaType,
       status = SagaStatus.STARTED.name,
       currentStep = definition.steps.first().stepName,
-      payload = payload
+      payload = payload,
+      createdAt = now,
+      updatedAt = now
     )
-
-    return instanceRepository.save(instance)
       .flatMap { saved ->
         createStepRecords(saved, definition)
           .then(Mono.just(saved))
@@ -90,10 +91,14 @@ class SagaOrchestrator(
               startedAt = LocalDateTime.now(),
               errorMessage = null
             )
-            stepRepository.save(updated)
-              .flatMap {
-                executeStep(instance, definition, stepDef)
-              }
+            stepRepository.markRetrying(
+              id = step.id!!,
+              status = updated.status,
+              retryCount = updated.retryCount,
+              startedAt = updated.startedAt!!,
+              errorMessage = updated.errorMessage
+            )
+              .then(executeStep(instance, definition, stepDef))
           }
       }
   }
@@ -140,15 +145,28 @@ class SagaOrchestrator(
           commandPayload = commandJson,
           startedAt = LocalDateTime.now()
         )
-        stepRepository.save(updated)
-      }
-      .flatMap {
-        val updatedInstance = instance.copy(
-          currentStep = stepDef.stepName,
-          status = SagaStatus.EXECUTING.name,
-          updatedAt = LocalDateTime.now()
+        stepRepository.markExecutingWithCommandPayload(
+          id = step.id!!,
+          status = updated.status,
+          commandPayload = updated.commandPayload!!,
+          startedAt = updated.startedAt!!
         )
-        instanceRepository.save(updatedInstance)
+          .then(
+            Mono.defer {
+              val updatedAt = LocalDateTime.now()
+              val updatedInstance = instance.copy(
+                currentStep = stepDef.stepName,
+                status = SagaStatus.EXECUTING.name,
+                updatedAt = updatedAt
+              )
+              instanceRepository.updateState(
+                id = updatedInstance.id!!,
+                status = updatedInstance.status,
+                currentStep = updatedInstance.currentStep,
+                updatedAt = updatedAt
+              ).thenReturn(updatedInstance)
+            }
+          )
       }
       .flatMap {
         commandProducer.sendCommand(stepDef.participant, sagaCommand)
@@ -181,15 +199,27 @@ class SagaOrchestrator(
           status = StepStatus.COMPENSATING.name,
           startedAt = LocalDateTime.now()
         )
-        stepRepository.save(updated)
-      }
-      .flatMap {
-        val updatedInstance = instance.copy(
-          currentStep = stepDef.stepName,
-          status = SagaStatus.COMPENSATING.name,
-          updatedAt = LocalDateTime.now()
+        stepRepository.markCompensating(
+          id = step.id!!,
+          status = updated.status,
+          startedAt = updated.startedAt!!
         )
-        instanceRepository.save(updatedInstance)
+          .then(
+            Mono.defer {
+              val updatedAt = LocalDateTime.now()
+              val updatedInstance = instance.copy(
+                currentStep = stepDef.stepName,
+                status = SagaStatus.COMPENSATING.name,
+                updatedAt = updatedAt
+              )
+              instanceRepository.updateState(
+                id = updatedInstance.id!!,
+                status = updatedInstance.status,
+                currentStep = updatedInstance.currentStep,
+                updatedAt = updatedAt
+              ).thenReturn(updatedInstance)
+            }
+          )
       }
       .flatMap {
         sagaMetrics.recordCompensationTriggered(instance.sagaType)
@@ -216,9 +246,18 @@ class SagaOrchestrator(
       completedAt = LocalDateTime.now()
     )
 
-    sagaMetrics.recordStepDuration(definition.steps.first().stepName, step)
+    sagaMetrics.recordStepDuration(definition.sagaType, updated)
+    if (newStatus == StepStatus.FAILED) {
+      sagaMetrics.recordStepFailure(definition.sagaType, step.stepName)
+    }
 
-    return stepRepository.save(updated)
+    return stepRepository.markCompletedFromReply(
+      id = updated.id!!,
+      status = updated.status,
+      replyPayload = updated.replyPayload,
+      errorMessage = updated.errorMessage,
+      completedAt = updated.completedAt!!
+    ).thenReturn(updated)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -256,6 +295,7 @@ class SagaOrchestrator(
             }
 
             is SagaAction.RetryStep -> {
+              sagaMetrics.recordStepRetry(updatedInstance.sagaType, action.stepName)
               retryStep(updatedInstance.id!!, action.stepName)
             }
 
@@ -285,23 +325,34 @@ class SagaOrchestrator(
     val updatedData = handler(data, replyNode)
     val updatedPayload = objectMapper.writeValueAsString(updatedData)
 
-    val updated = instance.copy(payload = updatedPayload, updatedAt = LocalDateTime.now())
-    return instanceRepository.save(updated)
+    return instanceRepository.updatePayloadWithJsonb(
+      id = instance.id!!,
+      payload = updatedPayload,
+      updatedAt = LocalDateTime.now()
+    )
   }
 
   private fun completeSaga(instance: SagaInstanceEntity, status: SagaStatus): Mono<Void> {
     log.info("Saga [{}] id={} completed with status={}", instance.sagaType, instance.sagaId, status)
 
+    val updatedAt = LocalDateTime.now()
+    val completedAt = LocalDateTime.now()
     val updated = instance.copy(
       status = status.name,
-      updatedAt = LocalDateTime.now(),
-      completedAt = LocalDateTime.now()
+      updatedAt = updatedAt,
+      completedAt = completedAt
     )
 
-    return instanceRepository.save(updated)
+    return instanceRepository.updateState(
+      id = instance.id!!,
+      status = status.name,
+      currentStep = instance.currentStep,
+      updatedAt = updatedAt,
+      completedAt = completedAt
+    )
       .doOnSuccess {
         sagaMetrics.recordSagaCompleted(instance.sagaType, status)
-        eventPublisher.publishSagaEvent(it)
+        eventPublisher.publishSagaEvent(updated)
       }
       .then()
   }

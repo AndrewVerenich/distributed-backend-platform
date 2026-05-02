@@ -238,6 +238,11 @@ React SPA для мониторинга саг в реальном времен�
 - Real-time обновления через SSE
 - Индикатор подключения
 
+#### Скриншоты React Dashboard
+
+![Saga Dashboard - List](./docs/react_1.png)
+![Saga Dashboard - Details](./docs/react_2.png)
+
 ---
 
 ### ⚙️ Мониторинг (Grafana + Prometheus)
@@ -248,6 +253,10 @@ React SPA для мониторинга саг в реальном времен�
 - **Step Duration (p95)** — латентность по шагам
 - **Step Retries** — частота ретраев по шагам
 - **Step Failures** — частота ошибок по шагам
+
+#### Скриншот Grafana Dashboard
+
+![Saga Grafana Dashboard](./docs/grafana.png)
 
 ---
 
