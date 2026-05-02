@@ -16,13 +16,14 @@ class SagaCommandConsumer(
 
   @KafkaListener(
     topics = ["\${saga.participant.command-topic}"],
-    groupId = "\${spring.application.name}"
+    groupId = "\${spring.application.name}",
+    containerFactory = "sagaKafkaListenerContainerFactory"
   )
   fun onCommand(command: SagaCommand) {
     log.info("Received command: sagaId={} step={} compensation={}",
       command.sagaId, command.stepName, command.isCompensation)
 
-    val handler = handlers.values.firstOrNull()
+    val handler = handlers[command.stepName]
     if (handler == null) {
       log.error("No handler found for command step={}", command.stepName)
       val reply = SagaReply(

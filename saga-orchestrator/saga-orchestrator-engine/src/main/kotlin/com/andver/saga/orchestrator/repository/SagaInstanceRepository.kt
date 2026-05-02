@@ -9,6 +9,57 @@ import java.util.UUID
 
 interface SagaInstanceRepository : ReactiveCrudRepository<SagaInstanceEntity, Long> {
 
+  @Query(
+    """
+    INSERT INTO saga_instance (saga_id, saga_type, status, current_step, payload, created_at, updated_at, completed_at)
+    VALUES (:sagaId, :sagaType, :status, :currentStep, CAST(:payload AS jsonb), :createdAt, :updatedAt, :completedAt)
+    RETURNING *
+    """
+  )
+  fun insertWithJsonb(
+    sagaId: UUID,
+    sagaType: String,
+    status: String,
+    currentStep: String?,
+    payload: String,
+    createdAt: java.time.LocalDateTime,
+    updatedAt: java.time.LocalDateTime,
+    completedAt: java.time.LocalDateTime? = null
+  ): Mono<SagaInstanceEntity>
+
+  @Query(
+    """
+    UPDATE saga_instance
+    SET status = :status,
+        current_step = :currentStep,
+        updated_at = :updatedAt,
+        completed_at = :completedAt
+    WHERE id = :id
+    """
+  )
+  fun updateState(
+    id: Long,
+    status: String,
+    currentStep: String?,
+    updatedAt: java.time.LocalDateTime,
+    completedAt: java.time.LocalDateTime? = null
+  ): Mono<Int>
+
+  @Query(
+    """
+    UPDATE saga_instance
+    SET payload = CAST(:payload AS jsonb),
+        updated_at = :updatedAt
+    WHERE id = :id
+    RETURNING *
+    """
+  )
+  fun updatePayloadWithJsonb(
+    id: Long,
+    payload: String,
+    updatedAt: java.time.LocalDateTime
+  ): Mono<SagaInstanceEntity>
+
   fun findBySagaId(sagaId: UUID): Mono<SagaInstanceEntity>
 
   fun findByStatus(status: String): Flux<SagaInstanceEntity>
