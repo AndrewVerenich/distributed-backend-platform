@@ -74,4 +74,8 @@ include(
   "saga-orchestrator:travel-flight-service",
   "saga-orchestrator:travel-hotel-service",
   "saga-orchestrator:travel-car-service",
+
+  "distributed-hash-map:map-starter",
+  "distributed-hash-map:demo-client-service-a",
+  "distributed-hash-map:demo-client-service-b",
 )

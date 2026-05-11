@@ -27,6 +27,7 @@ Capture), распределёнными транзакциями и други�
 14. [db-sharding](#14-db-sharding) — application-level шардирование PostgreSQL, R2DBC  
 15. [bff-gateway](#15-bff-gateway) — BFF, Spring Cloud Gateway, Redis rate limit  
 16. [saga-orchestrator](#16-saga-orchestrator) — orchestrated saga, SEC модель, Kafka, Kotlin DSL, React Dashboard  
+17. [distributed-hash-map](#17-distributed-hash-map) — реплицированный in-memory key-value store на Kafka compacted topic + LWW
 
 ---
 
@@ -354,5 +355,25 @@ Capture), распределёнными транзакциями и други�
 - Apache Kafka
 - PostgreSQL
 - React 18 / TypeScript / Tailwind CSS
+- Micrometer / Prometheus / Grafana
+- Docker Compose
+
+---
+
+### 17. [distributed-hash-map](./distributed-hash-map/README.md)
+Реализация распределённого in-memory key-value хранилища с **полной репликацией данных на каждой ноде** через Kafka compacted topic и LWW (Last-Write-Wins) разрешение конфликтов.
+
+**Описание:**
+- Локальный `ConcurrentHashMap` на каждой ноде + Kafka compacted topic как источник истины.
+- Eventual consistency + LWW по `(updatedAt, sourceNodeId)` — детерминированная свёртка конкурентных записей.
+- Tombstone flow для удалений + фоновый cleaner с публикацией Kafka compaction tombstone.
+- Startup restore: при старте полностью перечитывает compacted topic; readiness-индикатор `OUT_OF_SERVICE` до окончания restore — pod не получает трафик с пустым кэшем.
+- Spring Boot Starter с auto-configuration, properties и `DistributedMapRegistry` для нескольких map в одном сервисе.
+- Actuator + Micrometer + готовый Grafana dashboard (size, tombstones, applied/rejected, publish/apply rate).
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, Actuator)
+- Spring Kafka / Apache Kafka (compacted topics, AdminClient)
 - Micrometer / Prometheus / Grafana
 - Docker Compose
