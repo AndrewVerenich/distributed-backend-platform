@@ -2,3 +2,17 @@ A/B testing
 performance testing
 grpc + protobuf
 observability
+
+choreography-saga + inbox
+  Распределённая сага без центрального оркестратора: сервисы реагируют на события друг друга
+  (OrderCreated → PaymentCompleted → StockReserved → OrderShipped), компенсации идут обратной
+  цепочкой событий. Контрапункт к уже готовому saga-orchestrator — показывает trade-offs
+  orchestration vs choreography.
+  Ключевая часть — inbox pattern (недостающая половина outbox): дедупликация входящего события
+  + бизнес-изменение + запись в outbox одной локальной транзакцией = end-to-end exactly-once
+  без центрального координатора.
+  Плюс saga-state-tracker — пассивный наблюдатель, который реконструирует состояние саги по
+  событиям (correlation by orderId) и детектит зависшие саги, т.к. в хореографии нет owner'а
+  процесса.
+  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / Spring Kafka / Debezium / PostgreSQL /
+  inbox-starter + переиспользование outbox-publisher-starter / Docker Compose.
