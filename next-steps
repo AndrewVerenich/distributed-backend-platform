@@ -16,3 +16,111 @@ choreography-saga + inbox
   процесса.
   Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / Spring Kafka / Debezium / PostgreSQL /
   inbox-starter + переиспользование outbox-publisher-starter / Docker Compose.
+
+virtual-waiting-room
+  Виртуальная очередь на вход в защищаемый сервис (flash sale, ticket drop, регистрация).
+  Клиент попадает в waiting room, получает позицию и JWT-ticket только когда система
+  готова его впустить. Fair lottery / FIFO, лимит admission rate, защита от refresh-storm
+  и повторного занятия места. Контрапункт к nginx/Redis rate limit в auth-gateway и
+  bff-gateway: не «отрежь лишних 429», а «поставь в очередь и впускай с контролируемой
+  скоростью», не роняя checkout.
+  Стек: Kotlin / Spring Boot 3 (WebFlux) / Redis (ZSET очередь, позиция, ticket TTL) /
+  JWT ticket / Micrometer / Prometheus / Grafana / Docker Compose.
+
+load-shedding
+  Защита сервиса от перегрузки: adaptive concurrency (AIMD / Vegas-style), приоритетный
+  отказ, hedged requests. При saturating load лучше сразу отдать 503 дешёвым запросам,
+  чем держать всех в очереди и раздуть p99. Демо: два режима (с shedding и без) на одном
+  bottleneck-эндпоинте — Grafana показывает, как p99 и error budget ведут себя иначе.
+  Дополняет Resilience4j в bff-gateway: там circuit breaker на зависимости, здесь —
+  защита себя от входящего трафика.
+  Стек: Kotlin / Spring Boot 3 (WebFlux) / Micrometer / Prometheus / Grafana /
+  Docker Compose.
+
+cross-shard-unique-constraint
+  В db-sharding UNIQUE(email) на каждом шарде не даёт глобальной уникальности: шардирование
+  идёт по userId, поэтому alice@x.com спокойно создаётся на shard-0 и shard-1 одновременно.
+  Наивная проверка scatter-gather + INSERT проигрывает гонке (TOCTOU): оба запроса видят
+  «свободно» и оба коммитят. Демо сначала показывает этот баг двумя параллельными
+  регистрациями с одним email и разными userId.
+
+  Корректная модель — отдельный uniqueness index, шардированный по самому уникальному
+  ключу, не по userId:
+    1) нормализовать email (trim + lowercase);
+    2) INSERT reservation в email-index шард (hash(email)) с UNIQUE(email) и lease TTL —
+       локальный unique на этом шарде = глобальный unique на email;
+    3) INSERT пользователя в user-шард (hash(userId));
+    4) confirm reservation (committed) или компенсировать при фейле шага 3.
+  Если процесс умер после шага 2 — TTL отпускает email, reconciler дожимает зависшие
+  lease (confirm, если user уже есть, иначе release). Смена email — тот же протокол:
+  reserve new → update user → release old. Удаление — наоборот.
+
+  Bloom filter только как ускорение «точно занято», не как источник истины: false negative
+  пропустит дубликат. Стартер uniqueness-starter + переиспользование sharding-starter.
+  Метрики: naive_duplicate_commits, reservation_conflicts, lease_timeouts, confirm/release
+  rate. Grafana: два режима (naive vs lease) на одном сценарии гонки.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / PostgreSQL (N user-шардов + M index-шардов)
+  / Micrometer / Prometheus / Grafana / Docker Compose.
+
+distributed-lock-fencing
+  В distributed-task-scheduler Redisson лок не даёт списать дважды по cron. Этого мало:
+  после GC pause / network partition lease истекает, лок берёт другой инстанс, а старый
+  владелец «просыпается» и всё равно пишет в БД. Без fencing token — classic split-brain
+  double spend.
+
+  Протокол:
+    1) acquire: SET lock:{resource} NX PX={lease} + INCR fencing:{resource} → token;
+    2) любая мутация несёт token; storage принимает только token >= last_applied
+       (или строго > last_applied);
+    3) renew пока работаешь; если renew не успел — не пишем;
+    4) release только если ещё владеешь (compare-and-delete).
+  Наивный лок (только NX+TTL) в демо специально оставляем вторым режимом.
+
+  Демо: перевод денег / списание inventory. Инстанс-A берёт лок, freeze (simulated pause)
+  > lease, инстанс-B берёт лок и списывает, A «отмирает» и пытается списать ещё раз.
+  Без fencing — баланс −2, с fencing — второй write отвергнут, метрика fenced_rejects.
+  Стартер lock-starter (acquire/renew/runWithLock), не обёртка над Redisson.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / Redis (lock+lease) / PostgreSQL
+  (fencing column / last_token) / Micrometer / Prometheus / Grafana / Docker Compose.
+
+rate-limiter-algorithms
+  В auth-gateway и bff-gateway rate limit — nginx/Redis как готовый рычаг, без разбора
+  алгоритмов. Здесь сравнение трёх политик на одном API, в духе cache-eviction:
+
+    - fixed window: счётчик на календарное окно. Дёшево, но burst 2N на границе
+      (N в конце окна + N в начале следующего);
+    - sliding window (log или weighted counter): окно едет за запросом, без дырки
+      на границе, log точнее и жрёт память, counter — O(1) приближение;
+    - token bucket: tokens += rate * dt, cap=burst. Разрешает контролируемый
+      burst и гладкую среднюю скорость.
+
+  Демо-нагрузка: ровный поток, burst на границе окна, пачка после тишины. Grafana:
+  allowed/rejected, effective RPS, «дырка» fixed window vs гладкий bucket.
+  Стартер rate-limiter-starter, ключ userId/IP, Redis (INCR / ZSET / Lua token bucket),
+  429 + Retry-After. Не waiting room (очередь) и не load shedding (отказ по saturating
+  self): здесь честный per-key лимит на входе.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux) / Redis / Micrometer / Prometheus / Grafana /
+  Docker Compose.
+
+circuit-breaker-from-scratch
+  Resilience4j в bff-gateway закрывает зависимость как библиотека. Здесь — свой автомат
+  с нуля, чтобы были видны состояния и пороги:
+
+    Closed → (error ratio / slow-call порог за окно) → Open
+    Open → (все вызовы fail-fast, 503) → через waitDuration → Half-open
+    Half-open → пробный бюджет: успехи → Closed, снова ошибки → Open
+
+  Отдельно slow-call: ответ 200 за 2s — тоже failure для breaker'а, иначе «живая,
+  но мёртвая» зависимость не откроет цепь. Изоляция per-command / per-host, чтобы
+  один медленный payment не закрыл catalog.
+
+  Демо: зависимость с controllable latency/error. Без breaker — каскад, свои потоки
+  и p99 убиты. С breaker — быстрый fail, зависимость «лежит», сервис отвечает.
+  Grafana: state over time, reject rate, slow-call rate. Контрапункт load-shedding:
+  shedding защищает себя от входящих, breaker — себя от исходящих к больной зависимости.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux) / WebClient filter / Micrometer / Prometheus /
+  Grafana / Docker Compose.
