@@ -35,3 +35,6 @@ hs_err_pid*
 .gradle
 !/gradle/wrapper/gradle-wrapper.properties
 !/gradle/wrapper/gradle-wrapper.jar
+
+# saga dashboard UI
+saga-orchestrator/saga-dashboard-ui/node_modules/
