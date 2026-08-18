@@ -27,7 +27,8 @@ Capture), распределёнными транзакциями и други�
 14. [db-sharding](#14-db-sharding) — application-level шардирование PostgreSQL, R2DBC  
 15. [bff-gateway](#15-bff-gateway) — BFF, Spring Cloud Gateway, Redis rate limit  
 16. [saga-orchestrator](#16-saga-orchestrator) — orchestrated saga, SEC модель, Kafka, Kotlin DSL, React Dashboard  
-17. [distributed-hash-map](#17-distributed-hash-map) — реплицированный in-memory key-value store на Kafka compacted topic + LWW
+17. [distributed-hash-map](#17-distributed-hash-map) — реплицированный in-memory key-value store на Kafka compacted topic + LWW  
+18. [cache-eviction](#18-cache-eviction) — политики вытеснения, Zipf/Scan/Looping, stampede/penetration/avalanche
 
 ---
 
@@ -377,3 +378,20 @@ Capture), распределёнными транзакциями и други�
 - Spring Kafka / Apache Kafka (compacted topics, AdminClient)
 - Micrometer / Prometheus / Grafana
 - Docker Compose
+
+---
+
+### 18. [cache-eviction](./cache-eviction/README.md)
+Реализация bounded in-memory кэша с фокусом на алгоритмы вытеснения и устойчивость к типичным cache-сбоям.
+
+**Описание:**
+- Политики вытеснения: `FIFO`, `LRU`, `LFU`, `CLOCK`, `W-TinyLFU`.
+- Бенчмарк-профили нагрузки: `Zipf`, `Scan`, `Looping`.
+- Anti-stampede: singleflight для дедупликации конкурентных miss.
+- Anti-penetration: negative caching и Bloom filter для снижения запросов к источнику на несуществующие ключи.
+- Anti-avalanche: TTL jitter для размазывания истечения ключей во времени.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3
+- Micrometer

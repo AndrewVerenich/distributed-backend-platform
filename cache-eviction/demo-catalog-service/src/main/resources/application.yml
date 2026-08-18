@@ -1,0 +1,29 @@
+server:
+  port: 8095
+
+cache:
+  eviction:
+    max-size: 10000
+    policy: LRU
+    ttl: 5m
+    ttl-jitter: 30s
+    singleflight-enabled: true
+    negative-caching-enabled: true
+    negative-ttl: 15s
+    bloom-filter-enabled: true
+    bloom-expected-insertions: 100000
+    bloom-false-positive-rate: 0.01
+    caches:
+      products:
+        max-size: 10000
+        policy: LRU
+        bloom-expected-insertions: 200000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: demo-catalog-service

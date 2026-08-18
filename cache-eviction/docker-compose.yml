@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  demo-catalog-service:
+    build:
+      context: ./demo-catalog-service
+    ports: [ "8095:8095" ]
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8095/actuator/health >/dev/null || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports: [ "9094:9090" ]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - demo-catalog-service
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports: [ "3002:3000" ]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
