@@ -78,4 +78,7 @@ include(
   "distributed-hash-map:map-starter",
   "distributed-hash-map:demo-client-service-a",
   "distributed-hash-map:demo-client-service-b",
+
+  "cache-eviction:eviction-starter",
+  "cache-eviction:demo-catalog-service",
 )
