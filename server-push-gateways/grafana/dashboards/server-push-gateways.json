@@ -1,0 +1,193 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Active SSE connections",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(push_active_sse_connections)", "legendFormat": "sse", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Pending long polls",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(push_pending_long_poll_requests)", "legendFormat": "poll", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Delivered events (rate)",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(push_events_delivered_total[1m]))", "legendFormat": "delivered/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Reconnects (rate)",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(push_reconnect_total[1m]))", "legendFormat": "reconnect/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }, "unit": "s" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 5,
+      "title": "Delivery latency p50/p99 by transport",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le, transport) (rate(push_delivery_latency_seconds_bucket[1m])))", "legendFormat": "p50 {{transport}}", "refId": "A" },
+        { "expr": "histogram_quantile(0.99, sum by (le, transport) (rate(push_delivery_latency_seconds_bucket[1m])))", "legendFormat": "p99 {{transport}}", "refId": "B" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 6,
+      "title": "Events delivered rate by transport",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (transport) (rate(push_events_delivered_total[1m]))", "legendFormat": "{{transport}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
+      "id": 7,
+      "title": "SSE connections per instance",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "push_active_sse_connections", "legendFormat": "{{application}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
+      "id": 8,
+      "title": "Pending polls / waiters woken",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "push_pending_long_poll_requests", "legendFormat": "pending {{application}}", "refId": "A" },
+        { "expr": "sum(rate(push_local_waiters_woken_total[1m]))", "legendFormat": "woken/s", "refId": "B" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "bars", "fillOpacity": 40, "lineWidth": 1 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 20 },
+      "id": 9,
+      "title": "Rejected connections",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (reason) (rate(push_connections_rejected_total[1m]))", "legendFormat": "{{reason}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }, "unit": "ms" },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 20 },
+      "id": 10,
+      "title": "Benchmark last p50/p99",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "push_benchmark_last_p50_ms", "legendFormat": "p50 {{transport}}", "refId": "A" },
+        { "expr": "push_benchmark_last_p99_ms", "legendFormat": "p99 {{transport}}", "refId": "B" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 20 },
+      "id": 11,
+      "title": "Replay / drain",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (transport) (rate(push_events_replayed_total[1m]))", "legendFormat": "replay {{transport}}", "refId": "A" },
+        { "expr": "sum(rate(push_connections_drained_total[1m]))", "legendFormat": "drained/s", "refId": "B" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 27 },
+      "id": 12,
+      "title": "Redis pub/sub messages received",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (application) (rate(push_redis_messages_received_total[1m]))", "legendFormat": "{{application}}", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["server-push-gateways", "sse", "long-polling"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "browser",
+  "title": "server-push-gateways",
+  "uid": "server-push-gateways",
+  "version": 1
+}

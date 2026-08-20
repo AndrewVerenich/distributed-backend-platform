@@ -29,6 +29,7 @@ Capture), распределёнными транзакциями и други�
 16. [saga-orchestrator](#16-saga-orchestrator) — orchestrated saga, SEC модель, Kafka, Kotlin DSL, React Dashboard  
 17. [distributed-hash-map](#17-distributed-hash-map) — реплицированный in-memory key-value store на Kafka compacted topic + LWW  
 18. [cache-eviction](#18-cache-eviction) — политики вытеснения, Zipf/Scan/Looping, stampede/penetration/avalanche
+19. [server-push-gateways](#19-server-push-gateways) — SSE + long polling gateway, Redis Pub/Sub, nginx, benchmarks
 
 ---
 
@@ -395,3 +396,24 @@ Capture), распределёнными транзакциями и други�
 - Kotlin / Java 21
 - Spring Boot 3
 - Micrometer
+
+---
+
+### 19. [server-push-gateways](./server-push-gateways/README.md)
+Односторонний server push: SSE и long polling за nginx с горизонтальным масштабированием через Redis Pub/Sub.
+
+**Описание:**
+- Два transport-слоя в одном проекте: SSE (`Last-Event-ID`) и long polling (`since` cursor).
+- Event pipeline: producer → Kafka → event-bridge → Redis Pub/Sub → push-gateway ×3.
+- Scale-out без sticky sessions; graceful drain при остановке инстанса.
+- In-process benchmark + Gatling simulations (1000/5000 users, reconnect storm).
+- Prometheus / Grafana dashboard; static demo UI.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- Spring Data Redis (Reactive)
+- Apache Kafka
+- Nginx
+- Micrometer / Prometheus / Grafana
+- Docker Compose

@@ -81,4 +81,11 @@ include(
 
   "cache-eviction:eviction-starter",
   "cache-eviction:demo-catalog-service",
+
+  "server-push-gateways:push-event-model",
+  "server-push-gateways:event-bridge",
+  "server-push-gateways:push-gateway",
+  "server-push-gateways:push-sender-starter",
+  "server-push-gateways:event-producer-demo",
+  "server-push-gateways:scripts:gatling",
 )

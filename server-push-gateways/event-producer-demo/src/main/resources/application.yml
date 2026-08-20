@@ -1,0 +1,29 @@
+server:
+  port: 8097
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: event-producer-demo
+
+push:
+  sender:
+    enabled: true
+
+spring:
+  application:
+    name: event-producer-demo
+  kafka:
+    bootstrap-servers: localhost:9092
+    properties:
+      spring.json.add.type.headers: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
