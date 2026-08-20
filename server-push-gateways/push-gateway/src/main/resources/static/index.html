@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>server-push-gateways demo</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --border: #334155;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    .sub { color: var(--muted); margin-bottom: 20px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+    input, select, button, textarea {
+      background: #0b1220; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px; font: inherit;
+    }
+    button { cursor: pointer; background: var(--accent); color: #082f49; border: none; font-weight: 600; }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); cursor: pointer; color: var(--muted); }
+    .tab.active { background: #0b1220; color: var(--accent); border-color: var(--accent); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    #log {
+      width: 100%; min-height: 320px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.8rem; line-height: 1.4;
+    }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }
+    .stat { background: #0b1220; border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
+    .stat .k { color: var(--muted); font-size: 0.75rem; }
+    .stat .v { font-size: 1.1rem; margin-top: 4px; color: var(--ok); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>server-push-gateways</h1>
+    <div class="sub">SSE vs long polling demo — events via Kafka → Redis Pub/Sub → gateway behind nginx</div>
+
+    <div class="card">
+      <div class="row">
+        <label>clientId
+          <input id="clientId" value="alice" />
+        </label>
+        <label>producer URL
+          <input id="producerUrl" value="http://localhost:8097" style="min-width: 220px" />
+        </label>
+        <label>event type
+          <input id="eventType" value="order.updated" />
+        </label>
+        <button id="publishBtn">Publish event</button>
+        <button id="clearBtn" class="secondary">Clear log</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">Transport</div><div class="v" id="statTransport">—</div></div>
+        <div class="stat"><div class="k">Events</div><div class="v" id="statEvents">0</div></div>
+        <div class="stat"><div class="k">Last latency</div><div class="v" id="statLatency">—</div></div>
+        <div class="stat"><div class="k">since / lastId</div><div class="v" id="statCursor">0</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-tab="sse">SSE</div>
+        <div class="tab" data-tab="poll">Long poll</div>
+      </div>
+
+      <div id="ssePanel" class="panel active">
+        <div class="row">
+          <button id="sseConnect">Connect EventSource</button>
+          <button id="sseDisconnect" class="secondary" disabled>Disconnect</button>
+        </div>
+      </div>
+
+      <div id="pollPanel" class="panel">
+        <div class="row">
+          <button id="pollStart">Start long poll loop</button>
+          <button id="pollStop" class="secondary" disabled>Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Event log
+        <textarea id="log" readonly></textarea>
+      </label>
+    </div>
+  </div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    const stats = {
+      transport: document.getElementById('statTransport'),
+      events: document.getElementById('statEvents'),
+      latency: document.getElementById('statLatency'),
+      cursor: document.getElementById('statCursor'),
+    };
+
+    let eventCount = 0;
+    let lastEventId = 0;
+    let since = 0;
+    let es = null;
+    let polling = false;
+
+    function log(msg) {
+      const ts = new Date().toISOString().substring(11, 23);
+      logEl.value = `[${ts}] ${msg}\n` + logEl.value;
+    }
+
+    function onEvent(transport, event) {
+      eventCount += 1;
+      lastEventId = event.eventId || lastEventId;
+      since = Math.max(since, event.eventId || 0);
+      let latency = '—';
+      if (event.publishedAt) {
+        const ms = Date.now() - Date.parse(event.publishedAt);
+        latency = Number.isFinite(ms) ? `${ms} ms` : '—';
+      }
+      stats.transport.textContent = transport;
+      stats.events.textContent = String(eventCount);
+      stats.latency.textContent = latency;
+      stats.cursor.textContent = String(since);
+      log(`${transport} eventId=${event.eventId} type=${event.type} latency=${latency} payload=${JSON.stringify(event.payload)}`);
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
+      });
+    });
+
+    document.getElementById('clearBtn').onclick = () => { logEl.value = ''; };
+
+    document.getElementById('publishBtn').onclick = async () => {
+      const clientId = document.getElementById('clientId').value.trim();
+      const producerUrl = document.getElementById('producerUrl').value.replace(/\/$/, '');
+      const type = document.getElementById('eventType').value.trim() || 'demo.event';
+      const res = await fetch(`${producerUrl}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          type,
+          payload: { source: 'demo-ui', at: new Date().toISOString() },
+        }),
+      });
+      log(`publish status=${res.status}`);
+    };
+
+    document.getElementById('sseConnect').onclick = () => {
+      const clientId = document.getElementById('clientId').value.trim();
+      if (es) es.close();
+      const url = `/sse/stream?clientId=${encodeURIComponent(clientId)}`;
+      es = new EventSource(url);
+      document.getElementById('sseConnect').disabled = true;
+      document.getElementById('sseDisconnect').disabled = false;
+      stats.transport.textContent = 'sse';
+      log(`SSE connecting ${url}`);
+      es.onopen = () => log('SSE open');
+      es.onerror = () => log('SSE error/reconnect');
+      es.onmessage = (e) => {
+        try {
+          onEvent('sse', JSON.parse(e.data));
+        } catch (err) {
+          log(`SSE raw: ${e.data}`);
+        }
+      };
+    };
+
+    document.getElementById('sseDisconnect').onclick = () => {
+      if (es) es.close();
+      es = null;
+      document.getElementById('sseConnect').disabled = false;
+      document.getElementById('sseDisconnect').disabled = true;
+      log('SSE disconnected');
+    };
+
+    async function pollLoop() {
+      const clientId = document.getElementById('clientId').value.trim();
+      while (polling) {
+        try {
+          const res = await fetch(`/poll/updates?clientId=${encodeURIComponent(clientId)}&since=${since}`);
+          if (!res.ok) {
+            log(`poll HTTP ${res.status}`);
+            await new Promise(r => setTimeout(r, 1000));
+            continue;
+          }
+          const events = await res.json();
+          if (Array.isArray(events) && events.length) {
+            events.forEach(ev => onEvent('poll', ev));
+          } else {
+            log('poll timeout (empty)');
+          }
+        } catch (err) {
+          log(`poll error: ${err.message}`);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+
+    document.getElementById('pollStart').onclick = () => {
+      if (polling) return;
+      polling = true;
+      document.getElementById('pollStart').disabled = true;
+      document.getElementById('pollStop').disabled = false;
+      stats.transport.textContent = 'poll';
+      log('long poll loop started');
+      pollLoop();
+    };
+
+    document.getElementById('pollStop').onclick = () => {
+      polling = false;
+      document.getElementById('pollStart').disabled = false;
+      document.getElementById('pollStop').disabled = true;
+      log('long poll loop stopped');
+    };
+  </script>
+</body>
+</html>

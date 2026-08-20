@@ -1,0 +1,34 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: push-gateway
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics,info
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${HOSTNAME:push-gateway}
+
+push:
+  gateway:
+    max-connections: 2000
+    long-poll-timeout: 30s
+    sse-heartbeat-interval: 15s
+    channel-prefix: PUSH_CHANNEL
+    replay-prefix: PUSH_REPLAY
+    replay-max-size: 100

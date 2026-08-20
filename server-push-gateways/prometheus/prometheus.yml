@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  - job_name: 'server-push-gateways'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'push-gateway-1:8080'
+          - 'push-gateway-2:8080'
+          - 'push-gateway-3:8080'
+          - 'event-bridge:8080'
+          - 'event-producer-demo:8097'
+        labels:
+          system: 'server-push-gateways'
