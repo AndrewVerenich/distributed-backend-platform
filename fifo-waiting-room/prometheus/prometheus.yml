@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: waiting-room
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - waiting-room-service:8100
+          - waiting-room-service-2:8100
+        labels:
+          system: fifo-waiting-room
+          role: queue
+
+  - job_name: checkout
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - checkout-service:8101
+        labels:
+          system: fifo-waiting-room
+          role: checkout

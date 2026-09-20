@@ -88,4 +88,9 @@ include(
   "server-push-gateways:push-sender-starter",
   "server-push-gateways:event-producer-demo",
   "server-push-gateways:scripts:gatling",
+
+  "fifo-waiting-room:waiting-room-starter",
+  "fifo-waiting-room:waiting-room-service",
+  "fifo-waiting-room:checkout-service",
+  "fifo-waiting-room:scripts:gatling",
 )
