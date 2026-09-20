@@ -1,0 +1,33 @@
+server:
+  port: 8101
+
+spring:
+  application:
+    name: checkout-service
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+waiting-room:
+  ticket-ttl: 2m
+  ticket-filter:
+    enabled: true
+    path-prefixes:
+      - /checkout
+
+checkout:
+  latency: 200ms
+  max-concurrency: 20
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: checkout-service
+    distribution:
+      percentiles-histogram:
+        checkout_latency: true

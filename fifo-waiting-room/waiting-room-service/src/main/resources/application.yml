@@ -1,0 +1,32 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: waiting-room-service
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+waiting-room:
+  ticket-ttl: 2m
+  default-admit-rate: 50
+  max-queue: 10000
+  lock-ttl: 2s
+  default-event-ids:
+    - flash-sale-1
+  ticket-filter:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: waiting-room-service
+    distribution:
+      percentiles-histogram:
+        wr_wait: true

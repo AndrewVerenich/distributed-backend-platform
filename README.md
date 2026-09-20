@@ -30,6 +30,7 @@ Capture), распределёнными транзакциями и други�
 17. [distributed-hash-map](#17-distributed-hash-map) — реплицированный in-memory key-value store на Kafka compacted topic + LWW  
 18. [cache-eviction](#18-cache-eviction) — политики вытеснения, Zipf/Scan/Looping, stampede/penetration/avalanche
 19. [server-push-gateways](#19-server-push-gateways) — SSE + long polling gateway, Redis Pub/Sub, nginx, benchmarks
+20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 
 ---
 
@@ -417,3 +418,21 @@ Capture), распределёнными транзакциями и други�
 - Nginx
 - Micrometer / Prometheus / Grafana
 - Docker Compose
+
+---
+
+### 20. [fifo-waiting-room](./fifo-waiting-room/README.md)
+FIFO virtual waiting room: очередь на вход в checkout вместо 429 rate limit.
+
+**Описание:**
+- Redis ZSET очередь со score через монотонный `INCR` (без clock skew).
+- Контролируемый `admitRate`, идемпотентный join (refresh-storm не двигает позицию).
+- Opaque Redis ticket (`SET NX EX` + `GETDEL`) — single-use пропуск без JWT.
+- `waiting-room-starter` + demo services; dual-mode Gatling (direct vs queued); Grafana.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- Spring Data Redis (Reactive) + Lua
+- Micrometer / Prometheus / Grafana
+- Docker Compose / Gatling
