@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: geo-matching
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - demo-matching-service:8103
+          - demo-matching-service-2:8103
+        labels:
+          system: geo-nearest-matching

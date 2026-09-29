@@ -31,6 +31,7 @@ Capture), распределёнными транзакциями и други�
 18. [cache-eviction](#18-cache-eviction) — политики вытеснения, Zipf/Scan/Looping, stampede/penetration/avalanche
 19. [server-push-gateways](#19-server-push-gateways) — SSE + long polling gateway, Redis Pub/Sub, nginx, benchmarks
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
+21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 
 ---
 
@@ -436,3 +437,22 @@ FIFO virtual waiting room: очередь на вход в checkout вместо
 - Spring Data Redis (Reactive) + Lua
 - Micrometer / Prometheus / Grafana
 - Docker Compose / Gatling
+
+---
+
+### 21. [geo-nearest-matching](./geo-nearest-matching/README.md)
+Ближайший свободный исполнитель: Redis GEO только как индекс, назначение — atomic claim в PostgreSQL.
+
+**Описание:**
+- Redis хранит координаты `free + fresh`; статусы и requests живут в PostgreSQL.
+- `GEOSEARCH` даёт кандидатов, claim — `UPDATE ... WHERE status = 'free'` (гонка без double-assign).
+- Dual-write + sweeper/reconcile; Grafana показывает conflicts и drift индекса.
+- Симулятор блуждания, `POST /benchmark/load`, два инстанса на один PG.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Redis GEO
+- PostgreSQL
+- Micrometer / Prometheus / Grafana
+- Docker Compose

@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6382:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: geo_matching
+      POSTGRES_USER: geo
+      POSTGRES_PASSWORD: geo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geo -d geo_matching"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  demo-matching-service:
+    build:
+      context: .
+    ports:
+      - "8103:8103"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/geo_matching
+      SPRING_R2DBC_USERNAME: geo
+      SPRING_R2DBC_PASSWORD: geo
+      GEO_MATCHING_DEMO_SIMULATOR_ENABLED: "true"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8103/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  demo-matching-service-2:
+    build:
+      context: .
+    ports:
+      - "8104:8103"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/geo_matching
+      SPRING_R2DBC_USERNAME: geo
+      SPRING_R2DBC_PASSWORD: geo
+      GEO_MATCHING_DEMO_SIMULATOR_ENABLED: "false"
+      GEO_MATCHING_DEMO_AUTO_COMPLETE_ENABLED: "false"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports:
+      - "9096:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - demo-matching-service
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3004:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus

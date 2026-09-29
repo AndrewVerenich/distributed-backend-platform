@@ -1,0 +1,147 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Assign success (1m)",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(geo_assign_success_total[1m]))", "legendFormat": "assigned", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Claim conflicts (1m)",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(geo_assign_conflict_total[1m]))", "legendFormat": "conflicts", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "No candidates (1m)",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(geo_no_candidates_total[1m]))", "legendFormat": "empty GEO", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Candidate list exhausted (1m)",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(geo_candidate_list_exhausted_total[1m]))", "legendFormat": "exhausted", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "list" } },
+      "title": "GEO size vs PG free+fresh",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "avg(geo_index_size)", "legendFormat": "redis GEO", "refId": "A" },
+        { "expr": "avg(geo_pg_free_fresh)", "legendFormat": "pg free fresh", "refId": "B" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list" } },
+      "title": "Index drift |GEO − PG free|",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "avg(geo_index_drift)", "legendFormat": "drift", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 }, "unit": "s" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list" } },
+      "title": "Assign latency",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(geo_assign_seconds_bucket[1m])) by (le, outcome))", "legendFormat": "p50 {{outcome}}", "refId": "A" },
+        { "expr": "histogram_quantile(0.99, sum(rate(geo_assign_seconds_bucket[1m])) by (le, outcome))", "legendFormat": "p99 {{outcome}}", "refId": "B" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "id": 8,
+      "options": { "legend": { "displayMode": "list" } },
+      "title": "Location / stale / reconcile",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(geo_location_updates_total[1m]))", "legendFormat": "location ticks", "refId": "A" },
+        { "expr": "sum(rate(geo_stale_evictions_total[1m]))", "legendFormat": "stale evictions", "refId": "B" },
+        { "expr": "sum(rate(geo_index_reconcile_total[1m])) by (op)", "legendFormat": "reconcile {{op}}", "refId": "C" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["geo", "redis", "matching"],
+  "title": "Geo nearest matching",
+  "uid": "geo-nearest-matching",
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "timezone": "browser"
+}

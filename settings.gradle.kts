@@ -93,4 +93,6 @@ include(
   "fifo-waiting-room:waiting-room-service",
   "fifo-waiting-room:checkout-service",
   "fifo-waiting-room:scripts:gatling",
+
+  "geo-nearest-matching",
 )

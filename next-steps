@@ -17,17 +17,6 @@ choreography-saga + inbox
   Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / Spring Kafka / Debezium / PostgreSQL /
   inbox-starter + переиспользование outbox-publisher-starter / Docker Compose.
 
-fifo-waiting-room
-  FIFO virtual waiting room на вход в защищаемый сервис (flash sale, ticket drop,
-  регистрация). Клиент получает позицию в ZSET и opaque Redis ticket только когда
-  AdmitWorker готов его впустить. Идемпотентный join (refresh-storm), лимит admission
-  rate, single-use ticket через GETDEL. Контрапункт к nginx/Redis rate limit в
-  auth-gateway и bff-gateway: не «отрежь лишних 429», а «очередь + контролируемый
-  впуск», не роняя checkout. Без lottery/JWT — opaque ticket честнее для one-shot.
-  Стек: Kotlin / Spring Boot 3 (WebFlux) / Redis (ZSET + Lua) / opaque ticket /
-  Micrometer / Prometheus / Grafana / Docker Compose / Gatling.
-  Реализовано: fifo-waiting-room/
-
 load-shedding
   Защита сервиса от перегрузки: adaptive concurrency (AIMD / Vegas-style), приоритетный
   отказ, hedged requests. При saturating load лучше сразу отдать 503 дешёвым запросам,
@@ -125,41 +114,3 @@ circuit-breaker-from-scratch
 
   Стек: Kotlin / Spring Boot 3 (WebFlux) / WebClient filter / Micrometer / Prometheus /
   Grafana / Docker Compose.
-
-on-demand-dispatch
-  Платформа «найти ближайшего свободного исполнителя» для такси, курьеров, мастеров и
-  других мобильных сервисов. Исполнители постоянно шлют координаты, клиент запрашивает
-  nearest match, система назначает заказ, считает ETA и ведёт lifecycle до завершения.
-  Паттерн location → nearest available → match → track → complete — тот же у Uber,
-  Glovo, Bolt Food; Redis GEO/geohash закрывает частые writes и быстрый spatial search.
-
-  Базовый функционал:
-    - live tracking: исполнитель шлёт GPS каждые 3–5 сек → GEOADD в Redis;
-    - nearest search: GEOSEARCH / GEORADIUS — N ближайших в радиусе 2–5 км;
-    - статусы online / busy / offline — Redis Hash рядом с geo;
-    - matching: score = расстояние + рейтинг + время простоя, не только «ближайший»;
-    - ETA: расстояние по прямой или через routing API;
-    - order lifecycle: created → matched → en_route → arrived → completed;
-    - geofencing: триггеры «приехал к клиенту» / «в зоне» по радиусу или полигону;
-    - WebSocket / SSE: клиент и исполнитель видят друг друга на карте в реальном времени.
-
-  Расширения (после MVP):
-    - surge pricing по плотности спроса в geo-ячейке (geohash grid);
-    - heatmap спроса — куда направлять исполнителей;
-    - scheduled rides — поиск исполнителя заранее;
-    - multi-stop — несколько точек в одном заказе;
-    - fleet zones — разные Redis-ключи по городам/районам для шардинга;
-    - fallback matching — расширение радиуса или очередь, если в радиусе никого нет.
-
-  MVP: регистрация, обновление координат, «найди 5 ближайших свободных», создание заказа
-  + назначение, live-карта, admin с картой онлайн-исполнителей. Начать с nearest free
-  in 3km, потом score, surge, geofencing.
-
-  Redis: GEOADD drivers:city:{id} driver:{id} lng lat; HSET driver:{id} status/rating/
-  vehicle_type; GEOSEARCH ... BYRADIUS 3 km WITHDIST COUNT 10. PostgreSQL — заказы,
-  история, биллинг. Kafka — location.updated, order.matched, driver.arrived для push,
-  WebSocket и аналитики. Контрапунт rate-limiter и fifo-waiting-room: здесь не лимит
-  входа, а spatial matching и real-time tracking.
-
-  Стек: Kotlin / Spring Boot 3 (WebFlux) / Redis (GEO + Hash) / PostgreSQL / Kafka /
-  WebSocket / Micrometer / Prometheus / Grafana / Docker Compose.

@@ -1,0 +1,52 @@
+server:
+  port: 8103
+
+spring:
+  application:
+    name: demo-matching-service
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6382}
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5436/geo_matching}
+    username: ${SPRING_R2DBC_USERNAME:geo}
+    password: ${SPRING_R2DBC_PASSWORD:geo}
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 20
+
+geo-matching:
+  geo-key: geo:providers
+  heartbeat-ttl: 15s
+  default-radius-m: 3000
+  candidate-count: 10
+  demo:
+    simulator:
+      enabled: true
+      providers: 40
+      tick-interval: 1000
+      step-deg: 0.002
+      bbox:
+        min-lng: 27.50
+        max-lng: 27.65
+        min-lat: 53.85
+        max-lat: 53.95
+    auto-complete:
+      enabled: true
+      job-duration: 4s
+    sweeper-interval: 5000
+    reconcile-interval: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: demo-matching-service
+    distribution:
+      percentiles-histogram:
+        geo_assign: true
