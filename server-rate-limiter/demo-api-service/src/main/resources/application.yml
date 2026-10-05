@@ -1,0 +1,55 @@
+server:
+  port: ${SERVER_PORT:8210}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:demo-api}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6383}
+
+rate-limiter:
+  enabled: true
+  algorithm: ${RATE_LIMITER_ALGORITHM:token-bucket}
+  key-prefix: ${RATE_LIMITER_KEY_PREFIX:rl}
+  on-redis-error: reject
+  key:
+    strategy: header
+    header: X-User-Id
+    fallback-to-ip: true
+  filter:
+    enabled: true
+    exclude-path-prefixes:
+      - /actuator
+  rules:
+    - name: catalog
+      path-prefixes:
+        - /api/catalog
+      limit: 20
+      window: 1s
+      burst: 20
+    - name: checkout
+      path-prefixes:
+        - /api/checkout
+      limit: 5
+      window: 1s
+      burst: 20
+    - name: search
+      path-prefixes:
+        - /api/search
+      limit: 10
+      window: 1s
+      burst: 12
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${SPRING_APPLICATION_NAME:demo-api}
+    distribution:
+      percentiles-histogram:
+        rl_check: true

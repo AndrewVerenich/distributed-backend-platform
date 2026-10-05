@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: server-rate-limiter
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - demo-fixed:8210
+          - demo-sliding:8210
+          - demo-bucket:8210
+          - demo-bucket-2:8210
+        labels:
+          system: server-rate-limiter

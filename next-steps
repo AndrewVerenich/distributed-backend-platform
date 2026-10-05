@@ -75,25 +75,31 @@ distributed-lock-fencing
   Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / Redis (lock+lease) / PostgreSQL
   (fencing column / last_token) / Micrometer / Prometheus / Grafana / Docker Compose.
 
-rate-limiter-algorithms
-  В auth-gateway и bff-gateway rate limit — nginx/Redis как готовый рычаг, без разбора
-  алгоритмов. Здесь сравнение трёх политик на одном API, в духе cache-eviction:
+client-rate-limiter
+  Вторая сторона контракта server-rate-limiter. Сервер уже режет входящих и отдаёт 429 +
+  Retry-After / X-RateLimit-*. Здесь клиент сам держит обещанную скорость и не
+  устраивает retry-storm, когда ему уже сказали подождать.
 
-    - fixed window: счётчик на календарное окно. Дёшево, но burst 2N на границе
-      (N в конце окна + N в начале следующего);
-    - sliding window (log или weighted counter): окно едет за запросом, без дырки
-      на границе, log точнее и жрёт память, counter — O(1) приближение;
-    - token bucket: tokens += rate * dt, cap=burst. Разрешает контролируемый
-      burst и гладкую среднюю скорость.
+  Стартер client-rate-limiter-starter, фильтр на WebClient. Три части, которых нет
+  в серверном проекте:
+    - локальный бюджет на исходящий вызов; при 429 читает Retry-After и
+      X-RateLimit-Remaining и не долбит зависимость сразу;
+    - общий бюджет на несколько инстансов клиента через Redis. Ключ — downstream,
+      не userId. Иначе N подов по limit каждый снова упираются в сервер;
+    - метрики sent / held / got_429.
 
-  Демо-нагрузка: ровный поток, burst на границе окна, пачка после тишины. Grafana:
-  allowed/rejected, effective RPS, «дырка» fixed window vs гладкий bucket.
-  Стартер rate-limiter-starter, ключ userId/IP, Redis (INCR / ZSET / Lua token bucket),
-  429 + Retry-After. Не waiting room (очередь) и не load shedding (отказ по saturating
-  self): здесь честный per-key лимит на входе.
+  Демо на уже готовом server-rate-limiter API, два режима на одном сценарии: голый WebClient
+  против клиентского лимитера. Grafana: без клиента серверные reject растут, с клиентом
+  исходящий RPS садится на квоту и 429 почти пропадают.
 
-  Стек: Kotlin / Spring Boot 3 (WebFlux) / Redis / Micrometer / Prometheus / Grafana /
-  Docker Compose.
+  In-memory token bucket в одном процессе отдельно не делаем — это Resilience4j.
+  Не client-request-deduplicator (кэш ответа), не waiting room (очередь), не
+  load shedding (отказ своим входящим), не circuit breaker (зависимость больна).
+  Здесь клиент выполняет чужой лимит до повторного 429.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux) / WebClient filter / Redis /
+  переиспользование server-rate-limiter demo / Micrometer / Prometheus / Grafana /
+  Docker Compose / Gatling.
 
 circuit-breaker-from-scratch
   Resilience4j в bff-gateway закрывает зависимость как библиотека. Здесь — свой автомат

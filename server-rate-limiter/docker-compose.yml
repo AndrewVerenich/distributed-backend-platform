@@ -1,0 +1,100 @@
+version: "3.8"
+
+x-demo: &demo
+  build:
+    context: ./demo-api-service
+  depends_on:
+    redis:
+      condition: service_healthy
+  restart: on-failure
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://localhost:8210/actuator/health >/dev/null || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+    start_period: 40s
+
+services:
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6383:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  demo-fixed:
+    <<: *demo
+    ports:
+      - "8210:8210"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SERVER_PORT: "8210"
+      SPRING_APPLICATION_NAME: demo-fixed
+      RATE_LIMITER_ALGORITHM: fixed-window
+      RATE_LIMITER_KEY_PREFIX: rl
+
+  demo-sliding:
+    <<: *demo
+    ports:
+      - "8211:8210"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SERVER_PORT: "8210"
+      SPRING_APPLICATION_NAME: demo-sliding
+      RATE_LIMITER_ALGORITHM: sliding-window-counter
+      RATE_LIMITER_KEY_PREFIX: rl
+
+  demo-bucket:
+    <<: *demo
+    ports:
+      - "8212:8210"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SERVER_PORT: "8210"
+      SPRING_APPLICATION_NAME: demo-bucket
+      RATE_LIMITER_ALGORITHM: token-bucket
+      RATE_LIMITER_KEY_PREFIX: rl
+
+  demo-bucket-2:
+    <<: *demo
+    ports:
+      - "8213:8210"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SERVER_PORT: "8210"
+      SPRING_APPLICATION_NAME: demo-bucket-2
+      RATE_LIMITER_ALGORITHM: token-bucket
+      RATE_LIMITER_KEY_PREFIX: rl
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports:
+      - "9097:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - demo-fixed
+      - demo-sliding
+      - demo-bucket
+      - demo-bucket-2
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3005:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus

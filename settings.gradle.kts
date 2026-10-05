@@ -95,4 +95,8 @@ include(
   "fifo-waiting-room:scripts:gatling",
 
   "geo-nearest-matching",
+
+  "server-rate-limiter:rate-limiter-starter",
+  "server-rate-limiter:demo-api-service",
+  "server-rate-limiter:scripts:gatling",
 )
