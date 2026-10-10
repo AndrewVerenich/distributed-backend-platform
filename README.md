@@ -32,7 +32,7 @@ Capture), распределёнными транзакциями и други�
 19. [server-push-gateways](#19-server-push-gateways) — SSE + long polling gateway, Redis Pub/Sub, nginx, benchmarks
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
-22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, Gatling, Grafana
+22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
 
 ---
 
@@ -465,9 +465,9 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 
 **Описание:**
 - `rate-limiter-starter`: fixed window, sliding window (log и weighted counter), token bucket. Каждый check — один Lua-скрипт.
+- Application-level sharding: `CRC32(identity) % N`, ключи с Redis hash-tag `{identity}`, метка `X-RateLimit-Shard`.
 - Правила по префиксу пути, ключ `X-User-Id` или IP. 429 и заголовки `X-RateLimit-*`, `Retry-After`, `RateLimit-*`.
-- Демо из четырёх инстансов на одном Redis: три алгоритма рядом и вторая реплика token bucket.
-- Gatling: ровный поток, burst на границе окна, burst после тишины, общий лимит двух реплик. Grafana: allowed/rejected по алгоритму.
+- Демо: четыре API + три Redis; Gatling включая shard spread. Grafana: allowed/rejected и load per shard.
 
 **Стек:**
 - Kotlin / Java 21

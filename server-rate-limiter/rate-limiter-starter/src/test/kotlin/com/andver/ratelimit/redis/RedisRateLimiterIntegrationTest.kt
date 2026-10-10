@@ -62,7 +62,11 @@ class RedisRateLimiterIntegrationTest {
     val context = RedisSerializationContext.newSerializationContext<String, String>(serializer).build()
     redisTemplate = ReactiveStringRedisTemplate(factory, context)
     registry = SimpleMeterRegistry()
-    limiter = RedisRateLimiter(redisTemplate, "it", MicrometerRateLimitMetrics(registry))
+    limiter = RedisRateLimiter(
+      RedisShardRegistry.single("default", redisTemplate),
+      "it",
+      MicrometerRateLimitMetrics(registry),
+    )
   }
 
   @AfterAll

@@ -10,6 +10,7 @@ object RateLimitHeaders {
   const val REMAINING = "X-RateLimit-Remaining"
   const val RESET = "X-RateLimit-Reset"
   const val POLICY = "X-RateLimit-Policy"
+  const val SHARD = "X-RateLimit-Shard"
   const val RETRY_AFTER = "Retry-After"
   const val DRAFT_LIMIT = "RateLimit-Limit"
   const val DRAFT_REMAINING = "RateLimit-Remaining"
@@ -23,6 +24,7 @@ object RateLimitHeaders {
     headers[REMAINING] = decision.remaining.toString()
     headers[RESET] = resetEpoch.toString()
     headers[POLICY] = decision.algorithm.configName()
+    headers[SHARD] = decision.shard
     headers[DRAFT_LIMIT] = decision.limit.toString()
     headers[DRAFT_REMAINING] = decision.remaining.toString()
     headers[DRAFT_RESET] = resetDelta.toString()

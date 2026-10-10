@@ -6,6 +6,7 @@ spring:
     name: ${SPRING_APPLICATION_NAME:demo-api}
   data:
     redis:
+      # Used only when rate-limiter.sharding.enabled=false (local single-node).
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6383}
 
@@ -22,6 +23,19 @@ rate-limiter:
     enabled: true
     exclude-path-prefixes:
       - /actuator
+  sharding:
+    enabled: ${RATE_LIMITER_SHARDING_ENABLED:true}
+    single-shard-name: default
+    nodes:
+      - name: shard-0
+        host: ${RATE_LIMITER_SHARD_0_HOST:localhost}
+        port: ${RATE_LIMITER_SHARD_0_PORT:6383}
+      - name: shard-1
+        host: ${RATE_LIMITER_SHARD_1_HOST:localhost}
+        port: ${RATE_LIMITER_SHARD_1_PORT:6393}
+      - name: shard-2
+        host: ${RATE_LIMITER_SHARD_2_HOST:localhost}
+        port: ${RATE_LIMITER_SHARD_2_PORT:6394}
   rules:
     - name: catalog
       path-prefixes:

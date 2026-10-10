@@ -41,10 +41,15 @@ class RateLimitRuleSet(
       val resolved = source.map { rule -> resolve(properties, rule) }
       val excludes = properties.filter.excludePathPrefixes
       log.info(
-        "rate-limiter rules prefix={} defaultAlgorithm={} onRedisError={} rules={}",
+        "rate-limiter rules prefix={} defaultAlgorithm={} onRedisError={} sharding={} rules={}",
         properties.keyPrefix,
         properties.algorithm.configName(),
         properties.onRedisError,
+        if (properties.sharding.enabled) {
+          "on(${properties.sharding.nodes.size})"
+        } else {
+          "off(${properties.sharding.singleShardName})"
+        },
         resolved.joinToString { "${it.name}:${it.algorithm.configName()}:${it.limit}/${it.window.toMillis()}ms/burst=${it.burst}" },
       )
       return RateLimitRuleSet(resolved, excludes)

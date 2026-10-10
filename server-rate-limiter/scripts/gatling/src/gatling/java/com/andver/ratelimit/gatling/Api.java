@@ -27,6 +27,7 @@ final class Api {
       .check(status().in(200, 429))
       .check(header("X-RateLimit-Limit").exists())
       .check(header("X-RateLimit-Remaining").exists())
-      .check(header("X-RateLimit-Reset").exists());
+      .check(header("X-RateLimit-Reset").exists())
+      .check(header("X-RateLimit-Shard").exists());
   }
 }

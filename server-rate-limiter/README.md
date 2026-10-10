@@ -14,7 +14,7 @@
 
 **rate-limiter-starter** — Spring Boot starter. Алгоритм, лимиты и правила задаются в конфиге. Каждый check — один Lua-скрипт в Redis, поэтому квота не размножается по JVM.
 
-**demo-api-service** — один и тот же API в четырёх контейнерах: fixed window, sliding window counter, token bucket и вторая реплика token bucket. Реплики делят ключи, лимит не удваивается.
+**demo-api-service** — один и тот же API в четырёх контейнерах: fixed window, sliding window counter, token bucket и вторая реплика token bucket. Реплики делят ключи, лимит не удваивается. Квоты разложены по **трём Redis** через application-level sharding по `identity`.
 
 ```mermaid
 flowchart LR
@@ -26,7 +26,9 @@ flowchart LR
   Sliding --> Starter
   Bucket --> Starter
   Bucket2 --> Starter
-  Starter -->|Lua| Redis[(Redis)]
+  Starter -->|hash identity| R0[(redis-0)]
+  Starter --> R1[(redis-1)]
+  Starter --> R2[(redis-2)]
   Fixed --> Prom[Prometheus :9097]
   Sliding --> Prom
   Bucket --> Prom
@@ -91,6 +93,18 @@ rate-limiter:
     strategy: header               # header | ip
     header: X-User-Id
     fallback-to-ip: true
+  sharding:
+    enabled: true
+    nodes:
+      - name: shard-0
+        host: redis-0
+        port: 6379
+      - name: shard-1
+        host: redis-1
+        port: 6379
+      - name: shard-2
+        host: redis-2
+        port: 6379
   rules:
     - name: catalog
       path-prefixes: [/api/catalog]
@@ -104,11 +118,21 @@ rate-limiter:
       burst: 20
 ```
 
-Ключ Redis: `rl:{algorithm}:{rule}:{identity}`. Алгоритм входит в ключ, поэтому три демо-инстанса не мешают друг другу. Две реплики token bucket используют один и тот же ключ.
+Ключ Redis (cluster-shaped): `rl:{algorithm}:{rule}:{identity}` — identity в **hash-tag**, чтобы суффиксы окон внутри Lua (`base:windowId`) оставались в одном hash slot при переходе на Redis Cluster.
 
-`X-User-Id` чистится до `[A-Za-z0-9._@-]` и обрезается до 128 символов. Нет заголовка — remote address, нет и его — `anonymous` (все такие запросы делят одну корзину).
+Пример: `rl:sliding-window-counter:checkout:{alice}`.
 
-Redis недоступен: по умолчанию 429 (`on-redis-error: reject`). Локальный счётчик не включается — иначе у каждого инстанса была бы своя квота.
+Алгоритм входит в ключ, поэтому три демо-инстанса не мешают друг другу. Две реплики token bucket используют один и тот же ключ **и тот же shard** для одного `X-User-Id`.
+
+### Шардирование
+
+`shard = CRC32(identity) % N`. Один identity всегда на одном Redis — квота атомарна. Разные пользователи размазываются по шардам.
+
+`sharding.enabled=false` (по умолчанию в starter) — один `ReactiveStringRedisTemplate` Spring Boot, label шарда = `single-shard-name` (default). Демо включает sharding на три ноды.
+
+`X-User-Id` чистится до `[A-Za-z0-9._@-]` и обрезается до 128 символов. Нет заголовка — remote address, нет и его — `anonymous` (все такие запросы делят одну корзину **и один shard**).
+
+Redis шарда недоступен: по умолчанию 429 (`on-redis-error: reject`). Локальный счётчик не включается — иначе у каждого инстанса была бы своя квота.
 
 Стартер можно звать и без фильтра: бин `RateLimiter.check(rule, identity)`.
 
@@ -122,12 +146,13 @@ Redis недоступен: по умолчанию 429 (`on-redis-error: reject
 | `X-RateLimit-Remaining` | сколько ещё можно |
 | `X-RateLimit-Reset` | unix-время, когда окно сбросится / bucket снова полный |
 | `X-RateLimit-Policy` | имя алгоритма |
+| `X-RateLimit-Shard` | имя Redis-шарда (`shard-0` …) |
 | `RateLimit-Limit` / `RateLimit-Remaining` | то же квотой |
 | `RateLimit-Reset` | секунды до сброса |
 | `RateLimit-Policy` | `20;w=1` или `20;w=1;burst=20` |
 | `Retry-After` | только на 429, секунды до повтора, округление вверх |
 
-Тело 429: `error`, `rule`, `algorithm`, `limit`, `remaining`, `retryAfterMs`.
+Тело 429: `error`, `rule`, `algorithm`, `shard`, `limit`, `remaining`, `retryAfterMs`.
 
 ## Redis
 
@@ -136,6 +161,8 @@ Redis недоступен: по умолчанию 429 (`on-redis-error: reject
 | `rl:{alg}:{rule}:{id}:{windowId}` | STRING | fixed window и sliding counter |
 | `rl:sliding-window-log:{rule}:{id}` | ZSET | лог скользящего окна |
 | `rl:token-bucket:{rule}:{id}` | HASH | `tokens`, `ts` |
+
+В ключах `{id}` — Redis hash-tag (сам identity). Шард выбирается в приложении до Lua.
 
 ## Модули
 
@@ -168,7 +195,7 @@ docker compose up -d --build
 - Token bucket: http://localhost:8212 и реплика http://localhost:8213
 - Grafana: http://localhost:3005 (admin/admin) — dashboard **Server Rate Limiter**
 - Prometheus: http://localhost:9097
-- Redis: localhost:6383
+- Redis shards: localhost:6383 (`shard-0`), :6393 (`shard-1`), :6394 (`shard-2`)
 
 Чтобы на `:8211` поднять точный лог вместо counter, в compose поменяйте `RATE_LIMITER_ALGORITHM` на `sliding-window-log`.
 
@@ -177,7 +204,7 @@ curl -i localhost:8212/api/catalog/sku-1 -H 'X-User-Id: alice'
 curl -i -X POST localhost:8212/api/checkout -H 'X-User-Id: alice' -H 'Content-Type: application/json' -d '{}'
 ```
 
-Двадцать первый catalog-запрос того же пользователя за секунду — `429` и `Retry-After`. Тот же запрос с другим `X-User-Id` снова `200`: квота per-key.
+Двадцать первый catalog-запрос того же пользователя за секунду — `429` и `Retry-After`. Тот же запрос с другим `X-User-Id` снова `200`: квота per-key (и, возможно, другой shard).
 
 ## Нагрузка (Gatling)
 
@@ -208,6 +235,12 @@ curl -i -X POST localhost:8212/api/checkout -H 'X-User-Id: alice' -H 'Content-Ty
   --simulation=com.andver.ratelimit.gatling.SharedBucketSimulation \
   --non-interactive \
   -DUSERS=80
+
+# много user id размазывают load по shard-*; sticky user остаётся на одном
+./gradlew :server-rate-limiter:scripts:gatling:gatlingRun \
+  --simulation=com.andver.ratelimit.gatling.ShardSpreadSimulation \
+  --non-interactive \
+  -DDURATION_SECONDS=20 -DRPS=40
 ```
 
 Свойства: `FIXED_URL`, `SLIDING_URL`, `BUCKET_URL`, `BUCKET_URL_2`, `DURATION_SECONDS`, `RPS`, `CATALOG_LIMIT`, `CYCLES`, `USERS`. `CATALOG_LIMIT` должен совпадать с `limit` правила catalog (по умолчанию 20).
@@ -218,17 +251,19 @@ curl -i -X POST localhost:8212/api/checkout -H 'X-User-Id: alice' -H 'Content-Ty
 - **Boundary** — у fixed window allowed подскакивает почти до `2 * limit` на стыке секунд, sliding остаётся около `limit`.
 - **Silence** — после паузы token bucket пропускает около `burst`, fixed и sliding около `limit` checkout.
 - **Replicas** — сумма allowed двух token-bucket инстансов держится у одного лимита, а не у двух.
+- **Shard spread** — RPS по `shard-0/1/2` при многих user; sticky user не прыгает между шардами.
 
 ## Метрики
 
 | Metric | Смысл |
 |---|---|
-| `rl_requests_total{rule,algorithm,result}` | `allowed`, `rejected`, `redis_error` |
-| `rl_check_seconds` | время Lua-вызова, histogram |
+| `rl_requests_total{rule,algorithm,result,shard}` | `allowed`, `rejected`, `redis_error` |
+| `rl_check_seconds{rule,algorithm,result,shard}` | время Lua-вызова, histogram |
 
-Теги `rule` и `algorithm` — кардинальность конфига, не пользователя. `application` отличает реплики.
+Теги `rule`, `algorithm`, `shard` — кардинальность конфига/числа шардов, не пользователя. `application` отличает реплики API.
 
-![Grafana Dashboard](./docs/grafana.png)
+![Grafana Dashboard](./docs/grafana_1.png)
+![Grafana Dashboard](./docs/grafana_2.png)
 
 ## Тесты
 
@@ -237,4 +272,4 @@ curl -i -X POST localhost:8212/api/checkout -H 'X-User-Id: alice' -H 'Content-Ty
 ./gradlew :server-rate-limiter:rate-limiter-starter:integrationTest
 ```
 
-Integration (Redis через `docker run`): точный лимит fixed / sliding log / sliding counter / token bucket, сброс окна, refill после паузы, гонка из 40 параллельных check не выдаёт больше `limit`, разные identity и алгоритмы не делят корзину.
+Integration (Redis через `docker run`): точный лимит fixed / sliding log / sliding counter / token bucket, сброс окна, refill после паузы, гонка из 40 параллельных check не выдаёт больше `limit`, разные identity и алгоритмы не делят корзину. Отдельно — два Redis: sticky identity на одном shard, много user размазываются, ключи не протекают на соседний shard.

@@ -7,5 +7,5 @@ import java.time.Duration
 interface RateLimitMetrics {
   fun record(decision: RateLimitDecision, latency: Duration)
 
-  fun redisError(rule: String, algorithm: RateLimitAlgorithm)
+  fun redisError(rule: String, algorithm: RateLimitAlgorithm, shard: String)
 }

@@ -14,9 +14,10 @@ data class RateLimitDecision(
   val window: Duration,
   val burst: Long,
   val unavailable: Boolean = false,
+  val shard: String = "default",
 ) {
   companion object {
-    fun unavailable(rule: ResolvedRule, allow: Boolean): RateLimitDecision =
+    fun unavailable(rule: ResolvedRule, allow: Boolean, shard: String = "default"): RateLimitDecision =
       RateLimitDecision(
         allowed = allow,
         rule = rule.name,
@@ -28,6 +29,7 @@ data class RateLimitDecision(
         window = rule.window,
         burst = rule.burst,
         unavailable = true,
+        shard = shard,
       )
   }
 }

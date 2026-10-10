@@ -1,10 +1,12 @@
-version: "3.8"
-
 x-demo: &demo
   build:
     context: ./demo-api-service
   depends_on:
-    redis:
+    redis-0:
+      condition: service_healthy
+    redis-1:
+      condition: service_healthy
+    redis-2:
       condition: service_healthy
   restart: on-failure
   healthcheck:
@@ -13,12 +15,43 @@ x-demo: &demo
     timeout: 5s
     retries: 12
     start_period: 40s
+  environment: &demo-env
+    SPRING_DATA_REDIS_HOST: redis-0
+    SPRING_DATA_REDIS_PORT: "6379"
+    RATE_LIMITER_SHARDING_ENABLED: "true"
+    RATE_LIMITER_SHARD_0_HOST: redis-0
+    RATE_LIMITER_SHARD_0_PORT: "6379"
+    RATE_LIMITER_SHARD_1_HOST: redis-1
+    RATE_LIMITER_SHARD_1_PORT: "6379"
+    RATE_LIMITER_SHARD_2_HOST: redis-2
+    RATE_LIMITER_SHARD_2_PORT: "6379"
+    RATE_LIMITER_KEY_PREFIX: rl
 
 services:
-  redis:
+  redis-0:
     image: redis:7.2-alpine
     ports:
       - "6383:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-1:
+    image: redis:7.2-alpine
+    ports:
+      - "6393:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-2:
+    image: redis:7.2-alpine
+    ports:
+      - "6394:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -30,48 +63,40 @@ services:
     ports:
       - "8210:8210"
     environment:
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: "6379"
+      <<: *demo-env
       SERVER_PORT: "8210"
       SPRING_APPLICATION_NAME: demo-fixed
       RATE_LIMITER_ALGORITHM: fixed-window
-      RATE_LIMITER_KEY_PREFIX: rl
 
   demo-sliding:
     <<: *demo
     ports:
       - "8211:8210"
     environment:
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: "6379"
+      <<: *demo-env
       SERVER_PORT: "8210"
       SPRING_APPLICATION_NAME: demo-sliding
       RATE_LIMITER_ALGORITHM: sliding-window-counter
-      RATE_LIMITER_KEY_PREFIX: rl
 
   demo-bucket:
     <<: *demo
     ports:
       - "8212:8210"
     environment:
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: "6379"
+      <<: *demo-env
       SERVER_PORT: "8210"
       SPRING_APPLICATION_NAME: demo-bucket
       RATE_LIMITER_ALGORITHM: token-bucket
-      RATE_LIMITER_KEY_PREFIX: rl
 
   demo-bucket-2:
     <<: *demo
     ports:
       - "8213:8210"
     environment:
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: "6379"
+      <<: *demo-env
       SERVER_PORT: "8210"
       SPRING_APPLICATION_NAME: demo-bucket-2
       RATE_LIMITER_ALGORITHM: token-bucket
-      RATE_LIMITER_KEY_PREFIX: rl
 
   prometheus:
     image: prom/prometheus:v2.50.0

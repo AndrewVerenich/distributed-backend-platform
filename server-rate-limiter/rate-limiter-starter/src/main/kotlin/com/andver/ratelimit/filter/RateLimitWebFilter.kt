@@ -6,6 +6,7 @@ import com.andver.ratelimit.metrics.RateLimitMetrics
 import com.andver.ratelimit.model.FailureMode
 import com.andver.ratelimit.model.RateLimitDecision
 import com.andver.ratelimit.redis.RateLimiter
+import com.andver.ratelimit.redis.ShardAwareException
 import com.andver.ratelimit.rules.RateLimitRuleSet
 import org.slf4j.LoggerFactory
 import org.springframework.core.Ordered
@@ -32,10 +33,11 @@ class RateLimitWebFilter(
     val identity = keys.resolve(exchange.request, rule)
     return limiter.check(rule, identity)
       .onErrorResume { error ->
-        log.debug("rate limiter redis failure rule={} identity={}", rule.name, identity, error)
-        metrics.redisError(rule.name, rule.algorithm)
+        val shard = (error as? ShardAwareException)?.shard ?: properties.sharding.singleShardName
+        log.debug("rate limiter redis failure rule={} identity={} shard={}", rule.name, identity, shard, error)
+        metrics.redisError(rule.name, rule.algorithm, shard)
         val allow = properties.onRedisError == FailureMode.ALLOW
-        Mono.just(RateLimitDecision.unavailable(rule, allow))
+        Mono.just(RateLimitDecision.unavailable(rule, allow, shard))
       }
       .flatMap { decision ->
         exchange.attributes[DECISION] = decision
@@ -57,6 +59,7 @@ class RateLimitWebFilter(
       append("{\"error\":\"").append(error)
       append("\",\"rule\":\"").append(escape(decision.rule))
       append("\",\"algorithm\":\"").append(decision.algorithm.configName())
+      append("\",\"shard\":\"").append(escape(decision.shard))
       append("\",\"limit\":").append(decision.limit)
       append(",\"remaining\":").append(decision.remaining)
       append(",\"retryAfterMs\":").append(decision.retryAfter.toMillis())

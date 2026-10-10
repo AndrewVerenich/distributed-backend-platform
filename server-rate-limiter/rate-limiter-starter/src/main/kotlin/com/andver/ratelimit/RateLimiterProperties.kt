@@ -18,6 +18,7 @@ data class RateLimiterProperties(
   val onRedisError: FailureMode = FailureMode.REJECT,
   val key: KeyProperties = KeyProperties(),
   val filter: FilterProperties = FilterProperties(),
+  val sharding: ShardingProperties = ShardingProperties(),
   val rules: List<RuleProperties> = emptyList(),
 ) {
   data class KeyProperties(
@@ -31,6 +32,23 @@ data class RateLimiterProperties(
   data class FilterProperties(
     val enabled: Boolean = true,
     val excludePathPrefixes: List<String> = listOf("/actuator"),
+  )
+
+  /**
+   * Application-level Redis sharding by identity hash.
+   * When disabled, the starter uses Spring's single [org.springframework.data.redis.core.ReactiveStringRedisTemplate].
+   */
+  data class ShardingProperties(
+    val enabled: Boolean = false,
+    /** Shard label used when [enabled] is false. */
+    val singleShardName: String = "default",
+    val nodes: List<ShardNodeProperties> = emptyList(),
+  )
+
+  data class ShardNodeProperties(
+    val name: String = "",
+    val host: String = "localhost",
+    val port: Int = 6379,
   )
 
   data class RuleProperties(

@@ -14,7 +14,7 @@ import java.util.Locale
 import java.util.UUID
 
 class RedisRateLimiter(
-  private val redis: ReactiveStringRedisTemplate,
+  private val shards: RedisShardRegistry,
   private val keyPrefix: String,
   private val metrics: RateLimitMetrics,
 ) : RateLimiter {
@@ -25,38 +25,47 @@ class RedisRateLimiter(
   private val tokenBucket = script("lua/token_bucket.lua")
 
   override fun check(rule: ResolvedRule, identity: String): Mono<RateLimitDecision> {
+    val shard = shards.resolve(identity)
     val key = RedisKeys.base(keyPrefix, rule.algorithm, rule.name, identity)
     val windowMs = rule.window.toMillis().coerceAtLeast(1)
     val started = System.nanoTime()
-    val call = when (rule.algorithm) {
-      RateLimitAlgorithm.FIXED_WINDOW -> redis.execute(
-        fixedWindow,
-        listOf(key),
-        listOf(rule.limit.toString(), windowMs.toString()),
-      )
-      RateLimitAlgorithm.SLIDING_WINDOW_LOG -> redis.execute(
-        slidingLog,
-        listOf(key),
-        listOf(rule.limit.toString(), windowMs.toString(), UUID.randomUUID().toString()),
-      )
-      RateLimitAlgorithm.SLIDING_WINDOW_COUNTER -> redis.execute(
-        slidingCounter,
-        listOf(key),
-        listOf(rule.limit.toString(), windowMs.toString()),
-      )
-      RateLimitAlgorithm.TOKEN_BUCKET -> redis.execute(
-        tokenBucket,
-        listOf(key),
-        listOf(
-          rule.burst.toString(),
-          String.format(Locale.US, "%.10f", rule.limit.toDouble() / windowMs),
-          tokenTtlMs(rule, windowMs).toString(),
-        ),
-      )
-    }
+    val call = execute(shard.redis, rule, key, windowMs)
     return call.next()
-      .map { raw -> parse(raw, rule) }
+      .map { raw -> parse(raw, rule, shard.name) }
       .doOnNext { decision -> metrics.record(decision, Duration.ofNanos(System.nanoTime() - started)) }
+      .onErrorMap { error -> ShardAwareException(shard.name, error) }
+  }
+
+  private fun execute(
+    redis: ReactiveStringRedisTemplate,
+    rule: ResolvedRule,
+    key: String,
+    windowMs: Long,
+  ) = when (rule.algorithm) {
+    RateLimitAlgorithm.FIXED_WINDOW -> redis.execute(
+      fixedWindow,
+      listOf(key),
+      listOf(rule.limit.toString(), windowMs.toString()),
+    )
+    RateLimitAlgorithm.SLIDING_WINDOW_LOG -> redis.execute(
+      slidingLog,
+      listOf(key),
+      listOf(rule.limit.toString(), windowMs.toString(), UUID.randomUUID().toString()),
+    )
+    RateLimitAlgorithm.SLIDING_WINDOW_COUNTER -> redis.execute(
+      slidingCounter,
+      listOf(key),
+      listOf(rule.limit.toString(), windowMs.toString()),
+    )
+    RateLimitAlgorithm.TOKEN_BUCKET -> redis.execute(
+      tokenBucket,
+      listOf(key),
+      listOf(
+        rule.burst.toString(),
+        String.format(Locale.US, "%.10f", rule.limit.toDouble() / windowMs),
+        tokenTtlMs(rule, windowMs).toString(),
+      ),
+    )
   }
 
   private fun tokenTtlMs(rule: ResolvedRule, windowMs: Long): Long {
@@ -65,7 +74,7 @@ class RedisRateLimiter(
     return fillMs + windowMs
   }
 
-  private fun parse(raw: List<*>, rule: ResolvedRule): RateLimitDecision {
+  private fun parse(raw: List<*>, rule: ResolvedRule, shard: String): RateLimitDecision {
     val allowed = number(raw[0]) == 1L
     val limit = number(raw[1])
     val remaining = number(raw[2]).coerceAtLeast(0)
@@ -81,6 +90,7 @@ class RedisRateLimiter(
       resetAfter = Duration.ofMillis(resetMs),
       window = rule.window,
       burst = rule.burst,
+      shard = shard,
     )
   }
 
@@ -93,3 +103,9 @@ class RedisRateLimiter(
       setResultType(List::class.java)
     }
 }
+
+/** Carries the shard name so the web filter can tag redis_error metrics correctly. */
+class ShardAwareException(
+  val shard: String,
+  cause: Throwable,
+) : RuntimeException(cause.message, cause)

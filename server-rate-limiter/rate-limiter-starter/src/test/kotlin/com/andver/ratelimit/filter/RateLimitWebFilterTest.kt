@@ -80,6 +80,7 @@ class RateLimitWebFilterTest {
     assertEquals("20", exchange.response.headers.getFirst(RateLimitHeaders.LIMIT))
     assertEquals("19", exchange.response.headers.getFirst(RateLimitHeaders.REMAINING))
     assertEquals("token-bucket", exchange.response.headers.getFirst(RateLimitHeaders.POLICY))
+    assertEquals("shard-1", exchange.response.headers.getFirst(RateLimitHeaders.SHARD))
     assertEquals("19", exchange.response.headers.getFirst(RateLimitHeaders.DRAFT_REMAINING))
     assertNull(exchange.response.headers.getFirst(RateLimitHeaders.RETRY_AFTER))
     assertEquals(allowed().rule, RateLimitWebFilter.decision(exchange)?.rule)
@@ -151,5 +152,6 @@ class RateLimitWebFilterTest {
     resetAfter = Duration.ofSeconds(1),
     window = Duration.ofSeconds(1),
     burst = 20,
+    shard = "shard-1",
   )
 }
