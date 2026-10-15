@@ -1,0 +1,19 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: demo-dependency
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.andver.circuitbreaker: INFO

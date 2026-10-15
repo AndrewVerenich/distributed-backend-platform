@@ -1,0 +1,42 @@
+server:
+  port: 8102
+
+spring:
+  application:
+    name: demo-client-guarded
+
+demo:
+  dependency:
+    base-url: ${DEPENDENCY_URL:http://localhost:8100}
+  pool:
+    max-connections: 4
+
+circuit-breaker:
+  enabled: true
+  configs:
+    default:
+      sliding-window-size: 10
+      minimum-number-of-calls: 5
+      failure-rate-threshold: 50
+      slow-call-rate-threshold: 50
+      slow-call-duration: 2s
+      wait-duration-in-open-state: 5s
+      permitted-number-of-calls-in-half-open-state: 3
+  instances:
+    payment:
+      base-config: default
+    catalog:
+      base-config: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.andver.circuitbreaker: INFO

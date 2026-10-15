@@ -99,4 +99,10 @@ include(
   "server-rate-limiter:rate-limiter-starter",
   "server-rate-limiter:demo-api-service",
   "server-rate-limiter:scripts:gatling",
+
+  "circuit-breaker:circuit-breaker-starter",
+  "circuit-breaker:demo-dependency",
+  "circuit-breaker:demo-client-dumb",
+  "circuit-breaker:demo-client-guarded",
+  "circuit-breaker:scripts:gatling",
 )

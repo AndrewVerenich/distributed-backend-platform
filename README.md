@@ -33,6 +33,7 @@ Capture), распределёнными транзакциями и други�
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
+23. [circuit-breaker](#23-circuit-breaker) — свой count-based circuit breaker, slow-call, изоляция per-command, Gatling, Grafana
 
 ---
 
@@ -473,5 +474,22 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux)
 - Spring Data Redis (Reactive) + Lua
+- Micrometer / Prometheus / Grafana
+- Docker Compose / Gatling
+
+---
+
+### 23. [circuit-breaker](./circuit-breaker/README.md)
+Свой count-based circuit breaker с нуля: состояния видны в коде и на Grafana, не только как обёртка над Resilience4j.
+
+**Описание:**
+- `circuit-breaker-starter`: Closed → Open → Half-open, count-based окно, slow-call, пробный бюджет half-open, WebClient filter по имени команды.
+- Демо: зависимость с controllable latency/error; dumb-клиент с общим пулом (каскад на catalog) vs guarded с двумя пулами и двумя breaker'ами.
+- Gatling: cascade / isolated / side-by-side / error-trip. Grafana: state, reject/slow rate, browse p99 dumb vs guarded, pending acquire.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- WebClient / Reactor Netty
 - Micrometer / Prometheus / Grafana
 - Docker Compose / Gatling

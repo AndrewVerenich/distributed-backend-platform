@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: circuit-breaker
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - demo-dependency:8100
+          - demo-client-dumb:8101
+          - demo-client-guarded:8102
+        labels:
+          system: circuit-breaker

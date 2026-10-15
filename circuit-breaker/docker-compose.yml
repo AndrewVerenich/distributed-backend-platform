@@ -1,0 +1,78 @@
+x-client: &client
+  restart: on-failure
+  depends_on:
+    demo-dependency:
+      condition: service_healthy
+  environment: &client-env
+    DEPENDENCY_URL: http://demo-dependency:8100
+
+services:
+  demo-dependency:
+    build:
+      context: ./demo-dependency
+    ports:
+      - "8100:8100"
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8100/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  demo-client-dumb:
+    <<: *client
+    build:
+      context: ./demo-client-dumb
+    ports:
+      - "8101:8101"
+    environment:
+      <<: *client-env
+      SERVER_PORT: "8101"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8101/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  demo-client-guarded:
+    <<: *client
+    build:
+      context: ./demo-client-guarded
+    ports:
+      - "8102:8102"
+    environment:
+      <<: *client-env
+      SERVER_PORT: "8102"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8102/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports:
+      - "9096:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - demo-dependency
+      - demo-client-dumb
+      - demo-client-guarded
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3004:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
