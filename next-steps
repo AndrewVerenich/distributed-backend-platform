@@ -1,8 +1,3 @@
-A/B testing
-performance testing
-grpc + protobuf
-observability
-
 choreography-saga + inbox
   Распределённая сага без центрального оркестратора: сервисы реагируют на события друг друга
   (OrderCreated → PaymentCompleted → StockReserved → OrderShipped), компенсации идут обратной
@@ -26,54 +21,6 @@ load-shedding
   защита себя от входящего трафика.
   Стек: Kotlin / Spring Boot 3 (WebFlux) / Micrometer / Prometheus / Grafana /
   Docker Compose.
-
-cross-shard-unique-constraint
-  В db-sharding UNIQUE(email) на каждом шарде не даёт глобальной уникальности: шардирование
-  идёт по userId, поэтому alice@x.com спокойно создаётся на shard-0 и shard-1 одновременно.
-  Наивная проверка scatter-gather + INSERT проигрывает гонке (TOCTOU): оба запроса видят
-  «свободно» и оба коммитят. Демо сначала показывает этот баг двумя параллельными
-  регистрациями с одним email и разными userId.
-
-  Корректная модель — отдельный uniqueness index, шардированный по самому уникальному
-  ключу, не по userId:
-    1) нормализовать email (trim + lowercase);
-    2) INSERT reservation в email-index шард (hash(email)) с UNIQUE(email) и lease TTL —
-       локальный unique на этом шарде = глобальный unique на email;
-    3) INSERT пользователя в user-шард (hash(userId));
-    4) confirm reservation (committed) или компенсировать при фейле шага 3.
-  Если процесс умер после шага 2 — TTL отпускает email, reconciler дожимает зависшие
-  lease (confirm, если user уже есть, иначе release). Смена email — тот же протокол:
-  reserve new → update user → release old. Удаление — наоборот.
-
-  Bloom filter только как ускорение «точно занято», не как источник истины: false negative
-  пропустит дубликат. Стартер uniqueness-starter + переиспользование sharding-starter.
-  Метрики: naive_duplicate_commits, reservation_conflicts, lease_timeouts, confirm/release
-  rate. Grafana: два режима (naive vs lease) на одном сценарии гонки.
-
-  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / PostgreSQL (N user-шардов + M index-шардов)
-  / Micrometer / Prometheus / Grafana / Docker Compose.
-
-distributed-lock-fencing
-  В distributed-task-scheduler Redisson лок не даёт списать дважды по cron. Этого мало:
-  после GC pause / network partition lease истекает, лок берёт другой инстанс, а старый
-  владелец «просыпается» и всё равно пишет в БД. Без fencing token — classic split-brain
-  double spend.
-
-  Протокол:
-    1) acquire: SET lock:{resource} NX PX={lease} + INCR fencing:{resource} → token;
-    2) любая мутация несёт token; storage принимает только token >= last_applied
-       (или строго > last_applied);
-    3) renew пока работаешь; если renew не успел — не пишем;
-    4) release только если ещё владеешь (compare-and-delete).
-  Наивный лок (только NX+TTL) в демо специально оставляем вторым режимом.
-
-  Демо: перевод денег / списание inventory. Инстанс-A берёт лок, freeze (simulated pause)
-  > lease, инстанс-B берёт лок и списывает, A «отмирает» и пытается списать ещё раз.
-  Без fencing — баланс −2, с fencing — второй write отвергнут, метрика fenced_rejects.
-  Стартер lock-starter (acquire/renew/runWithLock), не обёртка над Redisson.
-
-  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / Redis (lock+lease) / PostgreSQL
-  (fencing column / last_token) / Micrometer / Prometheus / Grafana / Docker Compose.
 
 client-rate-limiter
   Вторая сторона контракта server-rate-limiter. Сервер уже режет входящих и отдаёт 429 +
