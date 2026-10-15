@@ -566,6 +566,21 @@ location /auth/refresh {
 
 ---
 
+## 📊 Метрики
+
+| Метрика | Смысл |
+|---|---|
+| `ag_auth_login_total{result}` | ok / invalid_credentials |
+| `ag_auth_refresh_total{result}` | ok / expired / revoked / fingerprint_mismatch / invalid |
+| `ag_auth_family_revoke_total` | Token family revoke (theft detection) |
+| `ag_auth_logout_total` | Logout |
+| `gateway.jwt.success` / `gateway.jwt.failure` | Gateway JWT validation |
+
+**Story:** `fingerprint_mismatch` + `family_revoke` — доказательство anti-theft rotation.  
+Grafana: http://localhost:3008 · Prometheus: http://localhost:9100
+
+---
+
 ## 🎬 Демо
 
 ### 1. Запуск окружения

@@ -2,6 +2,7 @@ package com.andver.banking.projection.handler
 
 import com.andver.banking.domain.EventType
 import com.andver.banking.domain.entity.AccountBalance
+import com.andver.banking.projection.metrics.ProjectionMetrics
 import com.andver.banking.projection.model.BankingEvent
 import com.andver.banking.projection.repository.AccountBalanceRepository
 import com.andver.banking.projection.repository.AccountBalanceSnapshotRepository
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import java.math.BigDecimal
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -29,11 +31,13 @@ class DefaultBalanceUpdateHandler(
   private val accountBalanceSnapshotRepository: AccountBalanceSnapshotRepository,
   @Value("\${command-event.snapshot.every-events}")
   private val snapshotEveryEvent: Long,
+  private val metrics: ProjectionMetrics,
 ) : BalanceUpdateHandler {
 
   private val mapper = ObjectMapper().registerKotlinModule().registerModule(JavaTimeModule())
 
   override fun handle(event: BankingEvent): Mono<Void> {
+    val started = System.nanoTime()
     val updatedAt = LocalDateTime.ofInstant(
       Instant.ofEpochMilli(event.createdAt),
       ZoneOffset.UTC
@@ -42,14 +46,12 @@ class DefaultBalanceUpdateHandler(
       EventType.ACCOUNT_OPENED -> {
         val payload = mapper.readTree(event.payload)
         val ownerId = payload[OWNER_ID].asLong()
-        val updatedAt = updatedAt
         accountBalanceRepository.create(event.aggregateId, ownerId, BigDecimal(0.0), updatedAt)
       }
 
       EventType.MONEY_DEPOSITED -> {
         val payload = mapper.readTree(event.payload)
         val amount = BigDecimal(payload[AMOUNT].asText())
-        val updatedAt = updatedAt
         accountBalanceRepository.findById(event.aggregateId)
           .flatMap { acc ->
             val newBalance = acc.balance + amount
@@ -61,7 +63,6 @@ class DefaultBalanceUpdateHandler(
       EventType.MONEY_WITHDRAWN -> {
         val payload = mapper.readTree(event.payload)
         val amount = BigDecimal(payload[AMOUNT].asText())
-        val updatedAt = updatedAt
         accountBalanceRepository.findById(event.aggregateId)
           .flatMap { acc ->
             val newBalance = acc.balance - amount
@@ -69,12 +70,23 @@ class DefaultBalanceUpdateHandler(
               .flatMap { createSnapshotIfNeeded(it, event.version) }
           }
       }
-    }.then()
+    }
+      .doFinally { signal ->
+        if (signal == reactor.core.publisher.SignalType.ON_COMPLETE) {
+          metrics.recordApplied(event.eventType.name, Duration.ofNanos(System.nanoTime() - started))
+        } else if (signal == reactor.core.publisher.SignalType.ON_ERROR) {
+          metrics.recordError(event.eventType.name)
+        }
+      }
+      .then()
   }
 
   fun createSnapshotIfNeeded(balance: AccountBalance, version: Long): Mono<Void> {
     return Mono.justOrEmpty(version)
       .filter { it % snapshotEveryEvent == 0L }
-      .flatMap { accountBalanceSnapshotRepository.create(balance.id!!, balance.balance, balance.updatedAt) }
+      .flatMap {
+        accountBalanceSnapshotRepository.create(balance.id!!, balance.balance, balance.updatedAt)
+          .doOnSuccess { metrics.recordSnapshot() }
+      }
   }
 }

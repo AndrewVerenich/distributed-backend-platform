@@ -128,11 +128,21 @@ curl http://localhost:8080/admin/ring/stats
 curl http://localhost:8080/admin/ring/lookup?key=42
 ```
 
+6) Grafana — распределение маршрутов по нодам:
+
+```
+http://localhost:3010   # admin / admin
+```
+
+Метрики: `chr_route_total{node,result}`, `chr_nodes_active`, `chr_nodes_added_total` / `chr_nodes_removed_total`.  
+Story: ровные линии по node = равномерный hash; при remove node — только часть ключей уезжает.
+
 ## Стек
 
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux, Scheduling, Configuration Properties)
 - Spring Cloud Netflix Eureka Client
 - Reactor WebClient
+- Micrometer / Prometheus / Grafana
 - MockWebServer (integration tests)
 - Docker Compose

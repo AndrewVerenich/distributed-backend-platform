@@ -4,7 +4,12 @@ outbox:
     topics: domain.order-created,domain.order-delivered
     group-id: notification-service-outbox
 
+server:
+  port: 8081
+
 spring:
+  application:
+    name: simple-notification-microservice
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -24,3 +29,15 @@ spring:
       max-idle-time: 30m
       max-acquire-time: 30s
       max-create-connection-time: 30s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: simple-notification-microservice
+    distribution:
+      percentiles-histogram:
+        outbox_process_seconds: true

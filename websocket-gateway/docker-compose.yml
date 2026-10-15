@@ -120,3 +120,26 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     restart: on-failure
 
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports:
+      - "9101:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - websocket-gateway
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3009:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+

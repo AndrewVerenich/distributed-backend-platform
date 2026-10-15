@@ -1,5 +1,6 @@
 package com.andver.gateway.websocket.handler
 
+import com.andver.gateway.websocket.metrics.WebsocketMetrics
 import com.andver.gateway.websocket.model.InternalClientWebSocketEvent
 import com.andver.gateway.websocket.service.UserSubscriptionService
 import com.andver.gateway.websocket.service.dispatcher.ClientMessageDispatcher
@@ -17,18 +18,25 @@ class UserChannelHandler(
   private val userSubscriptionService: UserSubscriptionService,
   private val clientMessageDispatcher: ClientMessageDispatcher,
   private val objectMapper: ObjectMapper,
+  private val metrics: WebsocketMetrics,
 ) : WebSocketHandler {
 
   override fun handle(session: WebSocketSession): Mono<Void> {
     val userId = session.attributes[USER_ID] as Long
     val incomingMessages = session.receive()
-      .doOnNext { log.debug("---> Received message from userId={}, message={}", userId, it.payloadAsText) }
+      .doOnNext {
+        metrics.messageIn()
+        log.debug("---> Received message from userId={}, message={}", userId, it.payloadAsText)
+      }
       .mapNotNull { message -> deserialize(message, userId) }
       .flatMap { event -> clientMessageDispatcher.dispatch(event!!) }
 
     val outcomeMessages = session.send(
       userSubscriptionService.subscribeToUserNotifications(userId)
-        .doOnNext { log.debug("<--- Send message to userId={}, message={}", userId, it) }
+        .doOnNext {
+          metrics.messageOut()
+          log.debug("<--- Send message to userId={}, message={}", userId, it)
+        }
         .map(session::textMessage)
     )
     return outcomeMessages
@@ -42,6 +50,7 @@ class UserChannelHandler(
         this.userId = userId
       }
     } catch (ex: Exception) {
+      metrics.deserializeError()
       log.error("---> Cannot deserialize message for userId=$userId, message =${message.payloadAsText}", ex)
       null
     }

@@ -330,6 +330,24 @@ outbox:
 
 ---
 
+## 📊 Метрики
+
+| Метрика | Где | Смысл |
+|---|---|---|
+| `outbox_published_total{type}` | publisher | INSERT в outbox в той же TX |
+| `outbox_publish_seconds` | publisher | Latency записи outbox |
+| `outbox_consumed_total{type}` | consumer | Kafka-сообщения с найденным handler |
+| `outbox_handler_missing_total{type}` | consumer | Нет handler для типа |
+| `outbox_processed_total{type,result}` | consumer | `processed` / `skipped` (duplicate) / `failed` |
+| `outbox_process_seconds` | consumer | Latency идемпотентной обработки |
+
+**Story:** при повторной доставке Kafka `skipped` растёт, а бизнес-handler не вызывается повторно — видимое доказательство exactly-once на consumer.
+
+Dashboard: [`grafana/dashboards/transactional-outbox.json`](./grafana/dashboards/transactional-outbox.json)  
+Grafana: http://localhost:3005 (admin/admin) · Prometheus: http://localhost:9097
+
+---
+
 ## 🎬 Демо
 
 ### 1. Запуск окружения

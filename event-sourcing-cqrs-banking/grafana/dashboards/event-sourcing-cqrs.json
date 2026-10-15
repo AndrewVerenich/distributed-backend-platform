@@ -1,0 +1,162 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Events appended /s",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(es_events_appended_total{application=\"banking-command-api\"}[1m]))", "legendFormat": "append/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Projection applied /s",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(es_projection_applied_total{application=\"projection-balance\"}[1m]))", "legendFormat": "apply/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Snapshots created",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(es_snapshots_created_total{application=\"projection-balance\"}) or vector(0)", "legendFormat": "snapshots", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Projection errors",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(es_projection_errors_total{application=\"projection-balance\"}) or vector(0)", "legendFormat": "errors", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Write vs projection (lag story)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(es_events_appended_total{application=\"banking-command-api\"}[1m]))", "legendFormat": "appended/s", "refId": "A" },
+        { "expr": "sum(rate(es_projection_applied_total{application=\"projection-balance\"}[1m]))", "legendFormat": "projected/s", "refId": "B" },
+        { "expr": "sum(rate(es_projection_consumed_total{application=\"projection-balance\"}[1m]))", "legendFormat": "consumed/s", "refId": "C" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Temporal query latency by path",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(es_query_temporal_seconds_bucket{application=\"banking-query-api\"}[1m])) by (le, path))", "legendFormat": "p95 {{path}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Events replayed (temporal)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (path) (rate(es_query_temporal_events_replayed_sum{application=\"banking-query-api\"}[1m]))", "legendFormat": "{{path}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 40, "lineWidth": 1 }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 21 },
+      "id": 8,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Commands by result",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (type, result) (rate(es_commands_total{application=\"banking-command-api\"}[1m]))", "legendFormat": "{{type}} / {{result}}", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["event-sourcing", "cqrs"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Event sourcing / CQRS banking",
+  "uid": "event-sourcing-cqrs-001",
+  "version": 1
+}

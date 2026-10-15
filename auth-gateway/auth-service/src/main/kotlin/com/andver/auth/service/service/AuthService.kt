@@ -3,6 +3,7 @@ package com.andver.auth.service.service
 import com.andver.auth.service.entity.RefreshToken
 import com.andver.auth.service.entity.RefreshTokenStatus
 import com.andver.auth.service.entity.User
+import com.andver.auth.service.metrics.AuthMetrics
 import com.andver.auth.service.model.RefreshResult
 import com.andver.auth.service.model.TokenPair
 import com.andver.auth.service.properties.JwtProperties
@@ -23,7 +24,8 @@ class AuthService(
   private val refreshTokenRepository: RefreshTokenRepository,
   private val passwordEncoder: PasswordEncoder,
   private val jwtService: JwtService,
-  private val redisTemplate: ReactiveRedisTemplate<String, String>
+  private val redisTemplate: ReactiveRedisTemplate<String, String>,
+  private val metrics: AuthMetrics,
 ) {
   private val log = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -44,9 +46,15 @@ class AuthService(
 
   fun login(username: String, password: String, fingerprint: String): Mono<TokenPair> {
     return userRepository.findByUsername(username)
-      .switchIfEmpty(Mono.error(IllegalArgumentException("Invalid credentials")))
+      .switchIfEmpty(
+        Mono.defer {
+          metrics.recordLogin("invalid_credentials")
+          Mono.error(IllegalArgumentException("Invalid credentials"))
+        }
+      )
       .flatMap { user ->
         if (!passwordEncoder.matches(password, user.password)) {
+          metrics.recordLogin("invalid_credentials")
           return@flatMap Mono.error(IllegalArgumentException("Invalid credentials"))
         }
 
@@ -63,6 +71,7 @@ class AuthService(
           )
         ).map {
           log.info("User logged in: userId=${user.id}, username=$username")
+          metrics.recordLogin("ok")
           TokenPair(accessToken, refreshTokenValue)
         }
       }
@@ -70,21 +79,29 @@ class AuthService(
 
   fun refresh(refreshToken: String, fingerprint: String): Mono<RefreshResult> {
     return refreshTokenRepository.findByToken(refreshToken)
-      .switchIfEmpty(Mono.error(IllegalArgumentException("Invalid refresh token")))
+      .switchIfEmpty(
+        Mono.defer {
+          metrics.recordRefresh("invalid")
+          Mono.error(IllegalArgumentException("Invalid refresh token"))
+        }
+      )
       .flatMap { token ->
         if (token.status != RefreshTokenStatus.ACTIVE) {
           log.warn("Attempted to use non-active refresh token: userId=${token.userId}, status=${token.status}")
           return@flatMap revokeTokenFamily(token.userId, token.family)
+            .doOnSuccess { metrics.recordRefresh("revoked") }
             .then(Mono.error(IllegalArgumentException("Refresh token revoked")))
         }
 
         if (token.expiresAt.isBefore(LocalDateTime.now())) {
+          metrics.recordRefresh("expired")
           return@flatMap Mono.error(IllegalArgumentException("Refresh token expired"))
         }
 
         if (token.fingerprint != fingerprint) {
           log.warn("Fingerprint mismatch for refresh token: userId=${token.userId}")
           return@flatMap revokeTokenFamily(token.userId, token.family)
+            .doOnSuccess { metrics.recordRefresh("fingerprint_mismatch") }
             .then(Mono.error(IllegalArgumentException("Security violation detected")))
         }
 
@@ -109,6 +126,7 @@ class AuthService(
               )
               .map {
                 log.info("Refresh token rotated: userId=${user.id}")
+                metrics.recordRefresh("ok")
                 RefreshResult(newAccessToken, newRefreshToken)
               }
           }
@@ -119,7 +137,10 @@ class AuthService(
     return refreshTokenRepository.findByToken(refreshToken)
       .flatMap { token ->
         refreshTokenRepository.updateStatus(token.id!!, RefreshTokenStatus.REVOKED)
-          .doOnSuccess { log.info("User logged out: userId=${token.userId}") }
+          .doOnSuccess {
+            metrics.recordLogout()
+            log.info("User logged out: userId=${token.userId}")
+          }
       }
       .then()
   }
@@ -129,7 +150,10 @@ class AuthService(
       .flatMap { claims ->
         val userId = claims.subject.toLong()
         refreshTokenRepository.revokeAllForUser(userId)
-          .doOnSuccess { log.info("User logged out from all devices: userId=$userId") }
+          .doOnSuccess {
+            metrics.recordLogout()
+            log.info("User logged out from all devices: userId=$userId")
+          }
       }
       .then()
   }
@@ -141,8 +165,10 @@ class AuthService(
         redisTemplate.hasKey("blacklist:$jti")
           .flatMap { isBlacklisted ->
             if (isBlacklisted) {
+              metrics.recordValidate("blacklisted")
               Mono.error(IllegalArgumentException("Token is blacklisted"))
             } else {
+              metrics.recordValidate("ok")
               Mono.just(claims)
             }
           }
@@ -152,5 +178,6 @@ class AuthService(
   private fun revokeTokenFamily(userId: Long, family: String): Mono<Int> {
     log.warn("Revoking token family: userId=$userId, family=$family")
     return refreshTokenRepository.revokeFamily(userId, family)
+      .doOnSuccess { metrics.recordFamilyRevoke() }
   }
 }

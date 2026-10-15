@@ -1,5 +1,6 @@
 package com.andver.counter.consumer
 
+import com.andver.counter.metrics.CounterMetrics
 import com.andver.counter.model.VideoViewCountMessage
 import com.andver.counter.service.CounterService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component
 class VideoViewCountConsumer(
   private val counterService: CounterService,
   private val objectMapper: ObjectMapper,
+  private val metrics: CounterMetrics,
 ) {
 
   private val logger = LoggerFactory.getLogger(VideoViewCountConsumer::class.java)
@@ -24,6 +26,7 @@ class VideoViewCountConsumer(
   fun consume(record: ConsumerRecord<Long, String>) {
     val message: VideoViewCountMessage = objectMapper.readValue(record.value())
     logger.info("Received windowed count: videoId={} count={}", message.videoId, message.count)
+    metrics.recordCountConsumed(message.count)
     counterService.incrementViewCount(message.videoId, message.count)
       .subscribe()
   }

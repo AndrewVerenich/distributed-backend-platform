@@ -133,6 +133,7 @@ services:
   simple-notification-microservice:
     build:
       context: ./simple-notification-microservice
+    ports: [ "8889:8081" ]
     depends_on:
       init-kafka:
         condition: service_completed_successfully
@@ -151,3 +152,27 @@ services:
     environment:
       - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:5432/master
     restart: on-failure
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports:
+      - "9097:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - simple-order-microservice
+      - simple-notification-microservice
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3005:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus

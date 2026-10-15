@@ -1,0 +1,115 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Ops /s",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(dbs_ops_total[1m]))", "legendFormat": "ops/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Scatter-gather p95",
+      "type": "stat",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(dbs_scatter_gather_seconds_bucket[5m])) by (le))", "legendFormat": "p95", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Max − min rows (skew)",
+      "type": "stat",
+      "targets": [
+        { "expr": "max(dbs_rows_per_shard) - min(dbs_rows_per_shard)", "legendFormat": "skew", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 5 },
+      "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Ops by shard (hot shard story)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (shard) (rate(dbs_ops_total[1m]))", "legendFormat": "{{shard}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 40, "lineWidth": 1 }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 5 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Rows per shard",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "dbs_rows_per_shard", "legendFormat": "{{shard}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Ops by type",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (op) (rate(dbs_ops_total[1m]))", "legendFormat": "{{op}}", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["db-sharding"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "DB sharding",
+  "uid": "db-sharding-001",
+  "version": 1
+}

@@ -1,0 +1,145 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Published /s",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(outbox_published_total[1m]))", "legendFormat": "publish/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Processed /s",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(rate(outbox_processed_total{result=\"processed\"}[1m]))", "legendFormat": "ok/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Duplicates skipped",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(outbox_processed_total{result=\"skipped\"}) or vector(0)", "legendFormat": "skipped", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Failed",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(outbox_processed_total{result=\"failed\"}) or vector(0)", "legendFormat": "failed", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Publish → process → skip (exactly-once story)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum by (type) (rate(outbox_published_total[1m]))", "legendFormat": "publish {{type}}", "refId": "A" },
+        { "expr": "sum by (type) (rate(outbox_processed_total{result=\"processed\"}[1m]))", "legendFormat": "processed {{type}}", "refId": "B" },
+        { "expr": "sum by (type) (rate(outbox_processed_total{result=\"skipped\"}[1m]))", "legendFormat": "skipped {{type}}", "refId": "C" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Publish latency",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(outbox_publish_seconds_bucket[1m])) by (le, type))", "legendFormat": "p95 {{type}}", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Process latency (idempotent handler)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(outbox_process_seconds_bucket[1m])) by (le, type))", "legendFormat": "p95 {{type}}", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["transactional-outbox"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Transactional outbox",
+  "uid": "transactional-outbox-001",
+  "version": 1
+}

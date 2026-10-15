@@ -1,5 +1,6 @@
 package com.andver.counter.consumer
 
+import com.andver.counter.metrics.CounterMetrics
 import com.andver.counter.model.VideoViewEvent
 import com.andver.counter.service.CounterService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component
 class VideoViewConsumer(
   private val counterService: CounterService,
   private val objectMapper: ObjectMapper,
+  private val metrics: CounterMetrics,
 ) {
 
   private val logger = LoggerFactory.getLogger(VideoViewConsumer::class.java)
@@ -24,6 +26,7 @@ class VideoViewConsumer(
   fun consume(record: ConsumerRecord<Long, String>) {
     val event: VideoViewEvent = objectMapper.readValue(record.value())
     logger.info("Tracking unique viewer: userId={} videoId={}", event.userId, event.videoId)
+    metrics.recordUniqueConsumed()
     counterService.trackUniqueViewer(event.videoId, event.userId)
       .subscribe()
   }

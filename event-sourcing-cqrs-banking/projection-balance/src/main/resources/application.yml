@@ -5,6 +5,8 @@ command-event:
   snapshot:
     every-events: 10
 spring:
+  application:
+    name: projection-balance
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/master
     username: admin
@@ -23,3 +25,15 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.value.default.type: com.andver.banking.projection.model.BankingEvent
         spring.json.trusted.packages: "*"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: projection-balance
+    distribution:
+      percentiles-histogram:
+        es_projection_apply_seconds: true

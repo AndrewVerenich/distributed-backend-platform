@@ -20,6 +20,7 @@ dependencies {
   implementation("org.springframework.kafka:spring-kafka")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("io.micrometer:micrometer-core")
+  runtimeOnly("io.micrometer:micrometer-registry-prometheus")
   implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
 
   implementation(project(":websocket-gateway:client-notification-model"))

@@ -1,8 +1,7 @@
 package com.andver.gateway.websocket.handler
 
+import com.andver.gateway.websocket.metrics.WebsocketMetrics
 import com.andver.gateway.websocket.service.AuthorizationService
-import io.micrometer.core.instrument.Gauge
-import io.micrometer.core.instrument.MeterRegistry
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -17,10 +16,8 @@ import org.springframework.web.reactive.socket.server.RequestUpgradeStrategy
 import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 import reactor.netty.http.server.HttpServerResponse
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
 
-private const val TOKEN_PARAM = "token"
 private const val AUTHORIZATION_HEADER = "Authorization"
 private const val BEARER_PREFIX = "Bearer "
 const val USER_ID = "userId"
@@ -28,13 +25,8 @@ const val USER_ID = "userId"
 @Component
 class HandshakeHandler(
   private val authorizationService: AuthorizationService,
-  meterRegistry: MeterRegistry,
+  private val metrics: WebsocketMetrics,
 ) : RequestUpgradeStrategy {
-  private final val connectionsCount = AtomicLong()
-
-  init {
-    Gauge.builder("websocket.connections.total", connectionsCount::get).register(meterRegistry)
-  }
 
   override fun upgrade(
     exchange: ServerWebExchange,
@@ -53,6 +45,7 @@ class HandshakeHandler(
       .then(
         Mono.defer {
           if (userId != null) {
+            metrics.handshakeOk()
             reactorResponse.sendWebsocket { income, out ->
               ReactorNettyWebSocketSession(
                 income,
@@ -62,16 +55,17 @@ class HandshakeHandler(
                 NettyWebSocketSessionSupport.DEFAULT_FRAME_MAX_SIZE
               ).let { session ->
                 log.info("Connection established for userId=$userId")
-                connectionsCount.incrementAndGet()
+                metrics.connectionOpened()
                 session.attributes[USER_ID] = userId
                 webSocketHandler.handle(session)
                   .doFinally {
-                    connectionsCount.decrementAndGet()
+                    metrics.connectionClosed()
                     log.info("Connection closed for userId=$userId")
                   }
               }
             }
           } else {
+            metrics.handshakeUnauthorized()
             log.warn("Unauthorized request - invalid or missing token")
             reactorResponse.status(HttpResponseStatus.UNAUTHORIZED).then()
           }

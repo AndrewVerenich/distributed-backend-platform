@@ -197,7 +197,13 @@ client:
   События сохраняются в Kafka, что гарантирует доставку даже при временных проблемах с WebSocket-соединениями.
 
 - **Метрики и мониторинг**  
-  Micrometer метрики для отслеживания количества активных соединений (`websocket.connections.total`).
+  Micrometer + Prometheus/Grafana:
+  - `websocket.connections.total` — активные соединения
+  - `wsg_handshake_total{result}` — ok / unauthorized
+  - `wsg_messages_in_total` / `wsg_messages_out_total`
+  - `wsg_deserialize_errors_total`
+
+  Grafana: http://localhost:3009 · Prometheus: http://localhost:9101
 
 ---
 

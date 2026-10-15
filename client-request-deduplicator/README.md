@@ -100,10 +100,19 @@ ExchangeFilterFunction для WebClient, который:
 - Возвращает `CacheRule` с настройками (TTL, исключённые поля)
 
 #### 5. DeduplicatorMetrics
-Метрики для мониторинга:
-- `hit` — количество cache hit
-- `miss` — количество cache miss
-- `bypass` — количество запросов, пропущенных без кэширования
+Метрики для мониторинга эффективности кэша:
+
+| Метрика | Смысл |
+|---|---|
+| `client.request.dedup.cache.total` | Все запросы через фильтр |
+| `client.request.dedup.cache.hit` | Ответ из Redis (сэкономленный round-trip) |
+| `client.request.dedup.cache.miss` | Cache miss → upstream + запись в Redis |
+| `client.request.dedup.cache.bypass` | Некэшируемый ответ (non-2xx) |
+
+Prometheus: `client_request_dedup_cache_*_total`  
+Grafana: http://localhost:3007 (admin/admin) · Prometheus: http://localhost:9099
+
+**Story:** при повторных одинаковых POST `/order` hit ratio растёт — видна экономия на upstream.
 
 **Использование:**
 
@@ -251,9 +260,9 @@ GET <fingerprint>
 ### 5. Проверка метрик
 
 ```bash
-curl http://localhost:7777/actuator/metrics/request.deduplicator.hit
-curl http://localhost:7777/actuator/metrics/request.deduplicator.miss
-curl http://localhost:7777/actuator/metrics/request.deduplicator.bypass
+curl http://localhost:7777/actuator/prometheus | grep client_request_dedup
+# или Grafana
+open http://localhost:3007   # admin / admin
 ```
 
 ---
