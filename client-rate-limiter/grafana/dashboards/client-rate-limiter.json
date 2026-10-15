@@ -1,0 +1,211 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Smart success / s",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(crl_requests_total{application=\"demo-client-smart\",result=\"success\"}[1m])) or vector(0)",
+          "legendFormat": "success",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Smart recovered / s",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(crl_requests_total{application=\"demo-client-smart\",result=\"recovered\"}[1m])) or vector(0)",
+          "legendFormat": "recovered",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Smart fail-fast / s",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(crl_requests_total{application=\"demo-client-smart\",result=\"fail_fast\"}[1m])) or vector(0)",
+          "legendFormat": "fail_fast",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Local throttled / s",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(crl_local_throttled_total{application=\"demo-client-smart\"}[1m])) or vector(0)",
+          "legendFormat": "throttled",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 5,
+      "title": "Wait seconds (smart)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, reason) (rate(crl_wait_seconds_bucket{application=\"demo-client-smart\"}[1m])))",
+          "legendFormat": "p50 {{reason}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, reason) (rate(crl_wait_seconds_bucket{application=\"demo-client-smart\"}[1m])))",
+          "legendFormat": "p99 {{reason}}",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 6,
+      "title": "Smart vs dumb outcomes",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(crl_requests_total{application=\"demo-client-smart\",result=~\"success|recovered\"}[1m])) or vector(0)",
+          "legendFormat": "smart ok",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(crl_dumb_requests_total{application=\"demo-client-dumb\",result=\"success\"}[1m])) or vector(0)",
+          "legendFormat": "dumb ok",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(crl_dumb_requests_total{application=\"demo-client-dumb\",result=\"rate_limited\"}[1m])) or vector(0)",
+          "legendFormat": "dumb still 429",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(rate(crl_dumb_retries_total{application=\"demo-client-dumb\"}[1m])) or vector(0)",
+          "legendFormat": "dumb naive retries",
+          "refId": "D"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "id": 7,
+      "title": "Upstream allowed / rejected",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(upstream_requests_total{application=\"demo-upstream\",result=\"allowed\"}[1m])) or vector(0)",
+          "legendFormat": "allowed",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(upstream_requests_total{application=\"demo-upstream\",result=\"rejected\"}[1m])) or vector(0)",
+          "legendFormat": "rejected",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "id": 8,
+      "title": "429 seen vs recovered (smart)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(crl_requests_total{application=\"demo-client-smart\",result=\"rate_limited\"}[1m])) or vector(0)",
+          "legendFormat": "429 seen",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(crl_requests_total{application=\"demo-client-smart\",result=\"recovered\"}[1m])) or vector(0)",
+          "legendFormat": "recovered after wait",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(crl_requests_total{application=\"demo-client-smart\",result=\"fail_fast\"}[1m])) or vector(0)",
+          "legendFormat": "fail-fast",
+          "refId": "C"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["client-rate-limiter"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "client-rate-limiter",
+  "uid": "client-rate-limiter",
+  "version": 1
+}

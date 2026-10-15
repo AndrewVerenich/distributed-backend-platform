@@ -1,0 +1,95 @@
+services:
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6384:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  demo-upstream:
+    build:
+      context: ./demo-upstream
+    ports:
+      - "8220:8220"
+    environment:
+      SERVER_PORT: "8220"
+      SPRING_APPLICATION_NAME: demo-upstream
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8220/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: on-failure
+
+  demo-client-smart:
+    build:
+      context: ./demo-client-smart
+    ports:
+      - "8221:8221"
+    depends_on:
+      redis:
+        condition: service_healthy
+      demo-upstream:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: "8221"
+      SPRING_APPLICATION_NAME: demo-client-smart
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      UPSTREAM_BASE_URL: http://demo-upstream:8220
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8221/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: on-failure
+
+  demo-client-dumb:
+    build:
+      context: ./demo-client-dumb
+    ports:
+      - "8222:8222"
+    depends_on:
+      demo-upstream:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: "8222"
+      SPRING_APPLICATION_NAME: demo-client-dumb
+      UPSTREAM_BASE_URL: http://demo-upstream:8220
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8222/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: on-failure
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports:
+      - "9098:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - demo-upstream
+      - demo-client-smart
+      - demo-client-dumb
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3006:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus

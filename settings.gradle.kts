@@ -99,4 +99,9 @@ include(
   "server-rate-limiter:rate-limiter-starter",
   "server-rate-limiter:demo-api-service",
   "server-rate-limiter:scripts:gatling",
+
+  "client-rate-limiter:client-rate-limiter-starter",
+  "client-rate-limiter:demo-upstream",
+  "client-rate-limiter:demo-client-smart",
+  "client-rate-limiter:demo-client-dumb",
 )
