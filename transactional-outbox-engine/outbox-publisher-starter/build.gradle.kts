@@ -20,6 +20,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.postgresql:r2dbc-postgresql:1.0.5.RELEASE")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+  api("io.micrometer:micrometer-core")
 
   api(project(":transactional-outbox-engine:outbox-model"))
 }

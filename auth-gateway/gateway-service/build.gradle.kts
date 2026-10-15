@@ -23,4 +23,5 @@ dependencies {
   implementation("io.jsonwebtoken:jjwt-impl:0.12.3")
   implementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
   implementation("io.micrometer:micrometer-core")
+  runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 }

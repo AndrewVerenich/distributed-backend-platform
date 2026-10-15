@@ -2,6 +2,8 @@ server:
   port: 7777
 
 spring:
+  application:
+    name: simple-client-microservice
   data:
     redis:
       host: localhost
@@ -11,6 +13,9 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: simple-client-microservice
 request:
   deduplicator:
     enabled: true

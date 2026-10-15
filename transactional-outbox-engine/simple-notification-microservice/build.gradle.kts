@@ -15,7 +15,9 @@ repositories {
 
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter")
+  implementation("org.springframework.boot:spring-boot-starter-actuator")
   implementation("org.springframework.kafka:spring-kafka")
   implementation(project(":transactional-outbox-engine:outbox-consumer-starter"))
+  runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 }
 

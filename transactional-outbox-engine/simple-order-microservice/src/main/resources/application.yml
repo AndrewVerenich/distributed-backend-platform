@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: simple-order-microservice
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/master
     username: demo
@@ -10,3 +12,15 @@ spring:
       max-idle-time: 30m
       max-acquire-time: 30s
       max-create-connection-time: 30s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: simple-order-microservice
+    distribution:
+      percentiles-histogram:
+        outbox_publish_seconds: true

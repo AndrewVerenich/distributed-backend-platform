@@ -44,6 +44,7 @@ class AuthServiceTest {
       passwordEncoder = passwordEncoder,
       jwtService = jwtService,
       redisTemplate = redisTemplate,
+      metrics = mockk(relaxed = true),
     )
   }
 

@@ -21,6 +21,7 @@ dependencies {
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
   runtimeOnly("org.postgresql:r2dbc-postgresql:1.0.5.RELEASE")
+  runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
   testImplementation("io.projectreactor:reactor-test")
 }

@@ -9,7 +9,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: simple-user-service
+    distribution:
+      percentiles-histogram:
+        dbs_scatter_gather_seconds: true
 
 sharding:
   default-shard: ${SHARD_DEFAULT:shard-0}
@@ -32,4 +38,3 @@ sharding:
       database: ${SHARD_DB:sharding_db}
       username: ${SHARD_USERNAME:postgres}
       password: ${SHARD_PASSWORD:postgres}
-

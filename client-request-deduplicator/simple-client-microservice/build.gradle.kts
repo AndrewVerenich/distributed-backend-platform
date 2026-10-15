@@ -16,5 +16,6 @@ repositories {
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter")
   implementation(project(":client-request-deduplicator:client-request-deduplicator-starter"))
+  runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 }
 

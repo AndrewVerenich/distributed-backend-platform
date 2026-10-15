@@ -285,6 +285,27 @@ fun consume(event: BankingEvent)
 
 ---
 
+## 📊 Метрики
+
+| Метрика | Сервис | Смысл |
+|---|---|---|
+| `es_commands_total{type,result}` | command-api | ok / already_exists / missing_account |
+| `es_events_appended_total{eventType}` | command-api | Append в event store |
+| `es_command_append_seconds` | command-api | Latency append |
+| `es_projection_consumed_total` | projection | Kafka consume |
+| `es_projection_applied_total` | projection | Read model update |
+| `es_snapshots_created_total` | projection | Snapshot каждые N событий |
+| `es_query_balance_total` / `_seconds` | query-api | Current balance |
+| `es_query_temporal_total{path}` | query-api | `snapshot` vs `full_history` |
+| `es_query_temporal_events_replayed` | query-api | Сколько событий replay при temporal query |
+
+**Story:** панель *Write vs projection* — gap между `appended/s` и `projected/s` = projection lag; temporal path `snapshot` должен replay меньше событий, чем `full_history`.
+
+Dashboard: [`grafana/dashboards/event-sourcing-cqrs.json`](./grafana/dashboards/event-sourcing-cqrs.json)  
+Grafana: http://localhost:3006 (admin/admin) · Prometheus: http://localhost:9098
+
+---
+
 ## 🎬 Демо
 
 ### 1. Запуск окружения

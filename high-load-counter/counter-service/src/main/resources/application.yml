@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: counter-service
   r2dbc:
     url: r2dbc:postgresql://postgres:5432/master
     username: demo
@@ -13,8 +15,23 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       auto-offset-reset: earliest
+
 counter:
   num-shards: 8
   flush-interval-ms: 30000
   video-view-topic: video-view
   video-view-counts-topic: video-view-counts
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: counter-service
+    distribution:
+      percentiles-histogram:
+        hlc_redis_incr_seconds: true
+        hlc_redis_mget_seconds: true
+        hlc_flush_duration_seconds: true

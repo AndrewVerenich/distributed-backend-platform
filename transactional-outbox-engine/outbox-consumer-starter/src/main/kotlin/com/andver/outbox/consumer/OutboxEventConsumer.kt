@@ -1,6 +1,7 @@
 package com.andver.outbox.consumer
 
 import com.andver.outbox.consumer.handler.OutboxEventHandler
+import com.andver.outbox.consumer.metrics.OutboxConsumerMetrics
 import com.andver.outbox.consumer.service.IdempotentEventProcessor
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
@@ -11,6 +12,7 @@ import org.springframework.messaging.handler.annotation.Header
 class OutboxEventConsumer(
   eventHandlers: List<OutboxEventHandler>,
   private val processor: IdempotentEventProcessor,
+  private val metrics: OutboxConsumerMetrics = OutboxConsumerMetrics.NOOP,
 ) {
   private val log = LoggerFactory.getLogger(OutboxEventConsumer::class.java)
   private val handlersByType = eventHandlers.associateBy { it.eventType }
@@ -33,9 +35,11 @@ class OutboxEventConsumer(
       val handler = handlersByType[type]
       if (handler == null) {
         log.warn("No handler found for event type: $type")
+        metrics.recordHandlerMissing(type)
         acknowledgment.acknowledge()
         return
       }
+      metrics.recordConsumed(type)
       processor.process(handler, idempotencyKey)
         .doOnSuccess {
           log.debug("Successfully processed event: type=$type, idempotencyKey=${idempotencyKey}")

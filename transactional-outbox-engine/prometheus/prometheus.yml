@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  - job_name: 'transactional-outbox-engine'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'simple-order-microservice:8080'
+          - 'simple-notification-microservice:8081'
+        labels:
+          system: 'transactional-outbox-engine'

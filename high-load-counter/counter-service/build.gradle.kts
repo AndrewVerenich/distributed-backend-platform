@@ -15,12 +15,14 @@ repositories {
 
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("org.springframework.boot:spring-boot-starter-actuator")
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
   implementation("org.springframework.kafka:spring-kafka")
   implementation("org.postgresql:r2dbc-postgresql:1.0.5.RELEASE")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+  runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
   testImplementation("org.testcontainers:junit-jupiter:1.19.3")
   testImplementation("org.testcontainers:postgresql:1.19.3")

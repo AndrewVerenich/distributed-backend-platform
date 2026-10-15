@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: banking-query-api
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/master
     username: admin
@@ -7,3 +9,16 @@ spring:
     driver-class-name: org.postgresql.Driver
 server:
   port: 8084
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: banking-query-api
+    distribution:
+      percentiles-histogram:
+        es_query_balance_seconds: true
+        es_query_temporal_seconds: true

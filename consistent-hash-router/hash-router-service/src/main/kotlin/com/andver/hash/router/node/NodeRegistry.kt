@@ -2,6 +2,7 @@ package com.andver.hash.router.node
 
 import com.andver.hash.router.config.RouterProperties
 import com.andver.hash.router.hash.ConsistentHashRing
+import com.andver.hash.router.metrics.RouterMetrics
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
@@ -9,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 class NodeRegistry(
   private val routerProperties: RouterProperties,
   private val consistentHashRing: ConsistentHashRing,
+  private val metrics: RouterMetrics,
 ) {
   private val allNodes = ConcurrentHashMap<String, BackendNode>()
 
@@ -16,6 +18,7 @@ class NodeRegistry(
     val wasAbsent = allNodes.putIfAbsent(node.id, node) == null
     if (wasAbsent) {
       consistentHashRing.addNode(node, routerProperties.virtualNodesPerNode)
+      metrics.nodeAdded()
     }
   }
 
@@ -25,6 +28,7 @@ class NodeRegistry(
     val removed = allNodes.remove(nodeId)
     if (removed != null) {
       consistentHashRing.removeNode(nodeId)
+      metrics.nodeRemoved()
     }
   }
 

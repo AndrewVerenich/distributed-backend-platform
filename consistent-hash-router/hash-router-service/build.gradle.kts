@@ -26,6 +26,7 @@ dependencies {
   implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+  runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }

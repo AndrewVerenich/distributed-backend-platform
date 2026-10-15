@@ -104,6 +104,30 @@ PostgreSQL всегда хранит последний известный ср�
 - **Kafka** — 4 партиции топика `video-view`, 2 партиции `video-view-counts`
 - **Redis 7.2** — sharded counter (8 шардов) + HyperLogLog
 - **PostgreSQL 15** — долговременное хранилище
+- **Micrometer / Prometheus / Grafana** — domain SLI (shard skew, HLL, flush lag)
+
+---
+
+## 📊 Метрики
+
+| Метрика | Тип | Смысл |
+|---|---|---|
+| `hlc_views_buffered_total` | Counter | Сумма delta, применённых к Redis-шардам |
+| `hlc_count_events_consumed_total` | Counter | Windowed count-сообщения из Kafka |
+| `hlc_unique_events_consumed_total` | Counter | Сырые view-события для HLL |
+| `hlc_redis_shard_incr_total{shard}` | Counter | INCR по шарду — **ровные линии = нет hot key** |
+| `hlc_hll_pfadd_total` | Counter | PFADD уникальных зрителей |
+| `hlc_redis_incr_seconds` | Timer | Latency Redis INCR |
+| `hlc_redis_mget_seconds` | Timer | Latency суммирования 8 шардов |
+| `hlc_tracked_videos` | Gauge | Dirty set до flush |
+| `hlc_flush_videos_total` / `hlc_flush_errors_total` | Counter | Flush в Postgres |
+| `hlc_flush_duration_seconds` | Timer | Длительность flush-цикла |
+| `hlc_db_upsert_total{result}` | Counter | UPSERT ok/error |
+
+**Story на дашборде:** панель *Shard INCR rate* должна показывать ~равный rate по `shard=0..7`. Если один шард доминирует — hot key (как при `num-shards: 1`).
+
+Dashboard: [`grafana/dashboards/high-load-counter.json`](./grafana/dashboards/high-load-counter.json)  
+Grafana: http://localhost:3004 (admin/admin) · Prometheus: http://localhost:9096
 
 ---
 
@@ -180,6 +204,15 @@ docker exec -it redis redis-cli
 http://localhost:8088
 ```
 
+**6. Grafana — shard skew и flush**
+
+```
+http://localhost:3004   # admin / admin
+```
+
+Под нагрузкой producer'а панель *Shard INCR rate* должна быть плоской по 8 шардам;
+*Tracked videos* растёт между flush-циклами и падает после успешного UPSERT.
+
 ---
 
 ## 📦 Структура проекта
@@ -198,8 +231,11 @@ high-load-counter/
 │   ├── redis/                  # ShardedCounterService (8 шардов + HyperLogLog)
 │   ├── consumer/               # VideoViewCountConsumer, VideoViewConsumer
 │   ├── scheduler/              # FlushScheduler → PostgreSQL
+│   ├── metrics/                # CounterMetrics + MicrometerCounterMetrics
 │   ├── tracker/                # VideoIdTracker (ConcurrentHashMap)
 │   └── repository/             # VideoCounterRepository (DatabaseClient, UPSERT)
+├── prometheus/prometheus.yml
+├── grafana/dashboards/high-load-counter.json
 ├── postgres/init.sql
 └── docker-compose.yml
 ```

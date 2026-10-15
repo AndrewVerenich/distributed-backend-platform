@@ -76,6 +76,9 @@ curl -s 'http://localhost:8082/users/search?name=Ali'
 curl -s http://localhost:8082/admin/shards
 ```
 
+Grafana: http://localhost:3011 (admin/admin) · Prometheus: http://localhost:9103  
+Метрики: `dbs_ops_total{shard,op}`, `dbs_rows_per_shard`, `dbs_scatter_gather_seconds` — skew = max−min rows.
+
 ## Конфигурация
 
 - `sharding.defaultShard` — shard по умолчанию
