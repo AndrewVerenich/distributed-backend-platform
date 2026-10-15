@@ -120,3 +120,134 @@ circuit-breaker-from-scratch
 
   Стек: Kotlin / Spring Boot 3 (WebFlux) / WebClient filter / Micrometer / Prometheus /
   Grafana / Docker Compose.
+
+idempotency-key
+  Контракт границы HTTP для одной мутации, не общий exactly-once на всю обработку.
+  Клиент сам выбирает ключ операции и шлёт его в заголовке Idempotency-Key. Сервер
+  обещает: тот же ключ у того же клиента выполнит POST один раз и на любой повтор
+  вернёт тот же ответ. TTL — часы или сутки: это повтор после таймаута, не кэш.
+
+  Запись проходит три состояния:
+    1) started — первый запрос вставляет строку с хешем тела и берёт её в работу.
+       Параллельный запрос с тем же ключом ждёт или получает 409 + Retry-After,
+       а не запускает второе списание;
+    2) completed — в той же транзакции, что и бизнес-запись, сохраняются статус и
+       тело ответа. Повтор читает эту строку, включая бизнес-ошибку
+       («недостаточно средств»), если она уже была результатом операции;
+    3) чужое тело — тот же ключ, другой JSON: 422, операция не выполняется.
+
+  Общая транзакция и делает эффект один раз. Упали после коммита — повтор безопасен.
+  Упали до коммита — lease у started протухает, следующий запрос доделывает работу.
+  Если обработчик в той же транзакции пишет заказ и строку outbox, ключ закрывает
+  вход, outbox — доставку события. Внешний HTTP-вызов до записи в БД ключ не
+  прикрывает: тот вызов нужен со своим ключом или через outbox.
+
+  Не client-request-deduplicator: тот стоит на вызывающей стороне, хеширует
+  метод+URI+тело и кэширует только 2xx. Ошибки не хранит, два одновременных
+  промаха оба уходят на сервер, после TTL запрос выполняется снова.
+  Не idempotency_key в outbox: тот ключ генерирует продюсер, консьюмер не
+  применяет одно событие дважды. Повторный POST породит второе событие со
+  вторым ключом. Клиент HTTP этот ключ не выбирает.
+
+  Стартер idempotency-starter, фильтр на сервере. В PostgreSQL: ключ, владелец,
+  хеш тела, статус, сохранённый ответ. Демо — POST списания. Gatling бьёт одним
+  ключом параллельно: ровно одно списание, остальные ответы — replay.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / PostgreSQL / Micrometer /
+  Prometheus / Grafana / Docker Compose / Gatling.
+
+booking-reservation
+  Сервис бронирования мест (зал / рейс / слот). Частый system-design: ресурс
+  конечный, два клиента не должны получить одно место, а неоплаченная бронь
+  обязана отпуститься сама. fifo-waiting-room только впускает человека в
+  checkout. Здесь решается, чьё место на ближайшие N минут.
+
+  Источник истины — одна строка PostgreSQL на место, не счётчик и не Redis.
+  Захват — один условный UPDATE, время берётся как now() базы, не часы
+  приложения:
+
+    UPDATE seats
+       SET status = 'held', holder_id = :user, reservation_id = :id,
+           hold_until = now() + :ttl
+     WHERE id = :seat
+       AND (status = 'free'
+            OR (status = 'held' AND hold_until < now()))
+    RETURNING *;
+
+  Ноль строк — 409, место уже взяли. Проверка «свободно» и запись происходят
+  в одном предикате, гонки read-then-write нет. Именованные места размазывают
+  блокировку по строкам. Общий счётчик «осталось N» сознательно не делаем:
+  это одна горячая строка; для интервью и демо сильнее карта мест.
+
+  Подтверждение и sweeper смотрят на непересекающиеся предикаты, поэтому
+  коммит и истечение не могут оба выиграть:
+
+    confirm:  status = 'held' AND reservation_id = :id AND hold_until >= now()
+    sweeper:  status = 'held' AND hold_until < now() → status = 'free'
+
+  Предикат hold уже считает просроченный held свободным, так что лаг sweeper
+  не держит место занятым. Sweeper нужен, чтобы статус и метрики стали честными.
+
+  Главный край интервью — оплата дольше TTL. A держит место, платёж идёт,
+  hold_until проходит, sweeper отпускает место, его берёт B, платёж A
+  успевает. confirm A не находит свою бронь (holder + hold_until) и не
+  переписывает место B. Успешный платёж без брони уходит в компенсацию
+  (запись outbox в той же транзакции, что и отказ confirm). Демо-платёж
+  умеет быть медленным, внешнего провайдера нет.
+
+  create и confirm принимают Idempotency-Key по контракту из идеи
+  idempotency-key: повтор того же ключа возвращает ту же бронь, а не второе
+  место. Двойной клик и ретрай после таймаута безопасны.
+
+  Наивный режим оставляем вторым: SELECT status, потом UPDATE без предиката.
+  Два параллельных запроса оба видят free и оба пишут held.
+
+  Демо: маленький зал, схема мест. Gatling — три сценария.
+    1) последнее место, много параллельных hold: ровно один успех;
+    2) TTL истёк, место снова free, его берёт следующий;
+    3) confirm после оплаты, которая пришла позже TTL: место остаётся у
+       нового держателя, первый платёж компенсируется.
+  Метрики: hold_conflicts, confirms, expired_releases, compensations.
+  oversell в корректном режиме остаётся 0; в наивном — растёт.
+  Grafana сравнивает оба режима на одном сценарии гонки.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / PostgreSQL / Micrometer /
+  Prometheus / Grafana / Docker Compose / Gatling. Небольшая схема мест
+  для демо.
+
+webhook-dispatcher
+  Доставка webhook наружу. Accept не ждёт чужой HTTP: домен ретраит
+  POST /internal/events до 202, идемпотентность по eventId. Строка events —
+  outbox доставки, в Kafka её забирает Debezium. event-processor делает
+  fan-out: одно сообщение topic.notification на подписчика, ключ
+  partitionKey:webhookId. signingSecret в топик не пишется, worker читает
+  его из БД непосредственно перед POST (HMAC + X-Idempotency-Key +
+  X-Timestamp). 2xx — успех; 5xx / timeout / сеть — retry; 400 и прочие
+  4xx — сразу DLQ; 410 ещё и ставит endpoint на паузу.
+
+  Поверх проработки, чтобы один мёртвый URL не держал остальных:
+    - HTTP не выполняется внутри Kafka consumer. Consumer только будит
+      воркер. Очередь отправки — delivery_attempts, claim через
+      SKIP LOCKED, не больше 2 in-flight на webhook. Порядок сохраняется
+      внутри partitionKey + webhookId: более новое событие ждёт, пока
+      предыдущее не стало succeeded или dlq;
+    - retry — это next_attempt_at с jitter, а не sleep в partition.
+      В демо интервалы короткие (3s, 8s, 20s); политика из проработки
+      1m → 5m → 30m задаётся тем же конфигом;
+    - пауза endpoint после N подряд транспортных ошибок (5xx / timeout /
+      сеть). 400 в счётчик паузы не идёт: это яд в конкретном событии,
+      а не мёртвый URL. Resume — POST /webhooks/{id}/resume;
+    - ручной replay DLQ: POST /deliveries/{id}/replay и
+      POST /webhooks/{id}/replay-dlq;
+    - ротация signing secret с grace period: подпись всегда current,
+      previous ещё валиден до previousValidUntil;
+    - demo-receiver с путями /hooks/ok|fail|bad|gone|slow, проверкой HMAC
+      и дедупом завершённых 2xx по X-Idempotency-Key.
+
+  Демо на одном PostgreSQL и общих топиках с tenant_id. Шард и топик на
+  каждого tenant из проработки оставляем на случай тысяч tenants: при
+  паре клиентов это ops, а не изоляция. SSRF режет link-local и metadata
+  всегда; частные адреса в демо разрешены, иначе docker-receiver недоступен.
+
+  Стек: Kotlin / Spring Boot 3 (WebFlux, R2DBC) / PostgreSQL / Debezium /
+  Kafka / Micrometer / Prometheus / Grafana / Docker Compose.
