@@ -33,6 +33,7 @@ Capture), распределёнными транзакциями и други�
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
+23. [idempotency-key](#23-idempotency-key) — HTTP Idempotency-Key: server + client starters, PostgreSQL lease/replay, Gatling
 
 ---
 
@@ -473,5 +474,23 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux)
 - Spring Data Redis (Reactive) + Lua
+- Micrometer / Prometheus / Grafana
+- Docker Compose / Gatling
+
+---
+
+### 23. [idempotency-key](./idempotency-key/README.md)
+HTTP Idempotency-Key на границе мутации: клиент держит ключ на ретраях, сервер гарантирует один эффект и replay ответа.
+
+**Описание:**
+- `idempotency-server-starter`: claim/lease/complete в PostgreSQL, `409` на параллель, `422` на чужое тело, replay включая бизнес-ошибку.
+- `idempotency-client-starter`: `operationId` → стабильный ключ, ретраи таймаута и `409` без смены ключа.
+- Демо списания за nginx (2 инстанса); naive vs starter на сценарии «успех на сервере, timeout у клиента».
+- Gatling: параллельный один ключ, конфликт тела. Grafana: started/replayed/conflicts/retries.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- PostgreSQL
 - Micrometer / Prometheus / Grafana
 - Docker Compose / Gatling

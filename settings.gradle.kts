@@ -99,4 +99,11 @@ include(
   "server-rate-limiter:rate-limiter-starter",
   "server-rate-limiter:demo-api-service",
   "server-rate-limiter:scripts:gatling",
+
+  "idempotency-key:idempotency-api",
+  "idempotency-key:idempotency-server-starter",
+  "idempotency-key:idempotency-client-starter",
+  "idempotency-key:demo-charge-service",
+  "idempotency-key:demo-client",
+  "idempotency-key:scripts:gatling",
 )

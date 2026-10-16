@@ -1,0 +1,102 @@
+x-charge: &charge
+  build:
+    context: ./demo-charge-service
+  depends_on:
+    postgres:
+      condition: service_healthy
+  restart: on-failure
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://localhost:8221/actuator/health >/dev/null || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+    start_period: 40s
+  environment: &charge-env
+    SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/idempotency
+    SPRING_R2DBC_USERNAME: idem
+    SPRING_R2DBC_PASSWORD: idem
+    SERVER_PORT: "8221"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_DB: idempotency
+      POSTGRES_USER: idem
+      POSTGRES_PASSWORD: idem
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U idem -d idempotency"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  demo-charge-1:
+    <<: *charge
+    environment:
+      <<: *charge-env
+      SPRING_APPLICATION_NAME: demo-charge-1
+
+  demo-charge-2:
+    <<: *charge
+    environment:
+      <<: *charge-env
+      SPRING_APPLICATION_NAME: demo-charge-2
+
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "8220:8220"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      demo-charge-1:
+        condition: service_healthy
+      demo-charge-2:
+        condition: service_healthy
+
+  demo-client:
+    build:
+      context: ./demo-client
+    ports:
+      - "8223:8223"
+    environment:
+      SERVER_PORT: "8223"
+      CHARGE_BASE_URL: http://nginx:8220
+      CHARGE_RESPONSE_TIMEOUT: 500ms
+    depends_on:
+      - nginx
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8223/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    ports:
+      - "9098:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - demo-charge-1
+      - demo-client
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3006:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus

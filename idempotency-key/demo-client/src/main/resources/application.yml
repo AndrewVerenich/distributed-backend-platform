@@ -1,0 +1,25 @@
+server:
+  port: ${SERVER_PORT:8223}
+
+spring:
+  application:
+    name: demo-client
+
+charge:
+  base-url: ${CHARGE_BASE_URL:http://localhost:8220}
+  response-timeout: ${CHARGE_RESPONSE_TIMEOUT:500ms}
+
+idempotency:
+  client:
+    enabled: true
+    max-retries: 5
+    default-retry-delay: 200ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: demo-client

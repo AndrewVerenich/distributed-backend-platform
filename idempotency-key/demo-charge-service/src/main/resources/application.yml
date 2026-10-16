@@ -1,0 +1,27 @@
+server:
+  port: ${SERVER_PORT:8221}
+
+spring:
+  application:
+    name: demo-charge-service
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5437/idempotency}
+    username: ${SPRING_R2DBC_USERNAME:idem}
+    password: ${SPRING_R2DBC_PASSWORD:idem}
+
+idempotency:
+  server:
+    enabled: true
+    lease: 30s
+    retention: 24h
+    paths:
+      - /charges
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}

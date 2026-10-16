@@ -1,0 +1,44 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Server claim outcomes",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "rate(idempotency_server_started_total[1m])", "legendFormat": "started" },
+        { "expr": "rate(idempotency_server_replayed_total[1m])", "legendFormat": "replayed" },
+        { "expr": "rate(idempotency_server_conflict_in_progress_total[1m])", "legendFormat": "in_progress" },
+        { "expr": "rate(idempotency_server_conflict_body_total[1m])", "legendFormat": "body_conflict" },
+        { "expr": "rate(idempotency_server_lease_taken_over_total[1m])", "legendFormat": "lease_taken_over" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Client retries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum by (reason) (rate(idempotency_client_retries_total[1m]))", "legendFormat": "{{reason}}" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Completed records",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "idempotency_server_completed_total", "legendFormat": "completed" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["idempotency"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "idempotency-key",
+  "uid": "idempotency-key",
+  "version": 1
+}

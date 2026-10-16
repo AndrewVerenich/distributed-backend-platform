@@ -68,7 +68,7 @@ circuit-breaker-from-scratch
   Стек: Kotlin / Spring Boot 3 (WebFlux) / WebClient filter / Micrometer / Prometheus /
   Grafana / Docker Compose.
 
-idempotency-key
+idempotency-key (implemented → ./idempotency-key)
   Контракт границы HTTP для одной мутации, не общий exactly-once на всю обработку.
   Клиент сам выбирает ключ операции и шлёт его в заголовке Idempotency-Key. Сервер
   обещает: тот же ключ у того же клиента выполнит POST один раз и на любой повтор
