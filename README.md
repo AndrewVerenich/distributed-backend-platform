@@ -33,6 +33,7 @@ Capture), распределёнными транзакциями и други�
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
+23. [booking-reservation](#23-booking-reservation) — атомарный hold места в PostgreSQL, TTL/sweeper, late-confirm compensation, Gatling/Grafana
 
 ---
 
@@ -473,5 +474,23 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux)
 - Spring Data Redis (Reactive) + Lua
+- Micrometer / Prometheus / Grafana
+- Docker Compose / Gatling
+
+---
+
+### 23. [booking-reservation](./booking-reservation/README.md)
+Бронь конкретного места: атомарный hold в PostgreSQL, TTL, confirm и компенсация при оплате после TTL.
+
+**Описание:**
+- Условный `UPDATE` по строке места (`free` или просроченный `held`); read-then-write в `/naive/holds` для сравнения oversell.
+- Confirm и sweeper на непересекающихся предикатах; late confirm → локальный compensation outbox.
+- Inline `Idempotency-Key` на create/confirm (контракт как у `idempotency-key`).
+- Gatling: last-seat race, TTL release, late confirm; Grafana: conflicts / oversell / compensations.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- PostgreSQL
 - Micrometer / Prometheus / Grafana
 - Docker Compose / Gatling

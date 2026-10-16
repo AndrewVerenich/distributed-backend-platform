@@ -1,0 +1,112 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Holds OK vs Conflicts",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(booking_holds_ok_total[1m])",
+          "legendFormat": "holds_ok"
+        },
+        {
+          "expr": "rate(booking_hold_conflicts_total[1m])",
+          "legendFormat": "hold_conflicts"
+        },
+        {
+          "expr": "rate(booking_naive_holds_ok_total[1m])",
+          "legendFormat": "naive_holds_ok"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "title": "Oversell (naive race)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "increase(booking_oversell_total[5m])",
+          "legendFormat": "oversell"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "title": "Confirms / Compensations / Expired",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(booking_confirms_ok_total[1m])",
+          "legendFormat": "confirms_ok"
+        },
+        {
+          "expr": "rate(booking_compensations_total[1m])",
+          "legendFormat": "compensations"
+        },
+        {
+          "expr": "rate(booking_expired_releases_total[1m])",
+          "legendFormat": "expired_releases"
+        },
+        {
+          "expr": "rate(booking_confirm_conflicts_total[1m])",
+          "legendFormat": "confirm_conflicts"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "title": "Idempotency",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(booking_idempotency_replayed_total[1m])",
+          "legendFormat": "replayed"
+        },
+        {
+          "expr": "rate(booking_idempotency_conflict_total[1m])",
+          "legendFormat": "conflict"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "title": "Totals (counters)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "booking_holds_ok_total", "legendFormat": "holds_ok" },
+        { "expr": "booking_hold_conflicts_total", "legendFormat": "conflicts" },
+        { "expr": "booking_oversell_total", "legendFormat": "oversell" },
+        { "expr": "booking_compensations_total", "legendFormat": "compensations" },
+        { "expr": "booking_confirms_ok_total", "legendFormat": "confirms" }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["booking", "reservation"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "browser",
+  "title": "Booking Reservation",
+  "uid": "booking-reservation",
+  "version": 1
+}

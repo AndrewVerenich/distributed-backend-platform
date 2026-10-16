@@ -99,4 +99,7 @@ include(
   "server-rate-limiter:rate-limiter-starter",
   "server-rate-limiter:demo-api-service",
   "server-rate-limiter:scripts:gatling",
+
+  "booking-reservation",
+  "booking-reservation:scripts:gatling",
 )

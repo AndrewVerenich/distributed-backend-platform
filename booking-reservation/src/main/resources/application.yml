@@ -1,0 +1,31 @@
+server:
+  port: 8230
+
+spring:
+  application:
+    name: booking-reservation
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5438/booking}
+    username: ${SPRING_R2DBC_USERNAME:booking}
+    password: ${SPRING_R2DBC_PASSWORD:booking}
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 20
+
+booking:
+  hold-ttl: 5s
+  sweeper-interval-ms: 1000
+  outbox-interval-ms: 2000
+  idempotency:
+    lease: 30s
+    retention: 24h
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: booking-reservation
