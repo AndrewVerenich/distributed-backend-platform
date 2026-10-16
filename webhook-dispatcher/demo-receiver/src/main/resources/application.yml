@@ -1,0 +1,24 @@
+server:
+  port: 8243
+
+spring:
+  application:
+    name: demo-receiver
+
+receiver:
+  slow-delay-ms: 10000
+  path-secrets:
+    "[/hooks/ok]": secret-ok
+    "[/hooks/fail]": secret-fail
+    "[/hooks/bad]": secret-bad
+    "[/hooks/gone]": secret-gone
+    "[/hooks/slow]": secret-slow
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: demo-receiver

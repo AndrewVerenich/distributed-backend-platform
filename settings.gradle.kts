@@ -99,4 +99,12 @@ include(
   "server-rate-limiter:rate-limiter-starter",
   "server-rate-limiter:demo-api-service",
   "server-rate-limiter:scripts:gatling",
+
+  "webhook-dispatcher:webhook-core",
+  "webhook-dispatcher:webhook-store",
+  "webhook-dispatcher:webhook-api",
+  "webhook-dispatcher:event-processor",
+  "webhook-dispatcher:delivery-worker",
+  "webhook-dispatcher:demo-receiver",
+  "webhook-dispatcher:scripts:gatling",
 )

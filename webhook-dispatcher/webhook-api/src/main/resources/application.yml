@@ -1,0 +1,23 @@
+server:
+  port: 8240
+
+spring:
+  application:
+    name: webhook-api
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5439}/webhook
+    username: ${DB_USER:webhook}
+    password: ${DB_PASSWORD:webhook}
+
+webhook:
+  allow-private-urls: true
+  secret-grace: 1h
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: webhook-api

@@ -1,0 +1,46 @@
+server:
+  port: 8242
+
+spring:
+  application:
+    name: delivery-worker
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5439}/webhook
+    username: ${DB_USER:webhook}
+    password: ${DB_PASSWORD:webhook}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9094}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+webhook:
+  topics:
+    notification: webhook.notification
+    dlq: webhook.dlq
+  delivery:
+    max-attempts: 5
+    backoff-seconds:
+      - 3
+      - 8
+      - 20
+    max-in-flight-per-webhook: 2
+    lease-seconds: 60
+    pause-after-transport-failures: 3
+    http-timeout-seconds: 5
+    allow-private-urls: true
+    poll-interval-ms: 500
+    reclaim-interval-ms: 15000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: delivery-worker

@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: webhook-dispatcher
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - webhook-api:8240
+          - event-processor:8241
+          - delivery-worker:8242
+          - demo-receiver:8243
+        labels:
+          system: webhook-dispatcher

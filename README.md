@@ -33,6 +33,7 @@ Capture), распределёнными транзакциями и други�
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
+23. [webhook-dispatcher](#23-webhook-dispatcher) — доставка webhooks, CDC fan-out, HMAC, retry с jitter, пауза endpoint, DLQ replay
 
 ---
 
@@ -473,5 +474,23 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux)
 - Spring Data Redis (Reactive) + Lua
+- Micrometer / Prometheus / Grafana
+- Docker Compose / Gatling
+
+---
+
+### 23. [webhook-dispatcher](./webhook-dispatcher/README.md)
+Доставка webhooks подписчикам: accept не ждёт чужой HTTP, fan-out и retry изолированы по endpoint.
+
+**Описание:**
+- `POST /internal/events` пишет событие в PostgreSQL и сразу отвечает `202`. В Kafka строка попадает через Debezium.
+- `event-processor` разворачивает событие в N сообщений `webhook.notification` (ключ `partitionKey:webhookId`); secret в топик не пишется.
+- `delivery-worker` не делает HTTP в Kafka consumer: claim из `delivery_attempts` через `SKIP LOCKED`, max 2 in-flight на webhook, retry с jitter, pause/DLQ/replay.
+- Outbound HMAC + `X-Idempotency-Key`; demo-receiver с `/hooks/ok|fail|bad|gone|slow`. Grafana + Gatling.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- PostgreSQL / Debezium / Kafka
 - Micrometer / Prometheus / Grafana
 - Docker Compose / Gatling
