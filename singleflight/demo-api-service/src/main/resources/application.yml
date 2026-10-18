@@ -1,0 +1,33 @@
+server:
+  port: 8221
+
+spring:
+  application:
+    name: demo-api-service
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+upstream:
+  base-url: ${UPSTREAM_BASE_URL:http://localhost:8220}
+
+singleflight:
+  enabled: true
+  mode: ${SINGLEFLIGHT_MODE:local}
+  share-errors: ${SINGLEFLIGHT_SHARE_ERRORS:true}
+  waiter-timeout: ${SINGLEFLIGHT_WAITER_TIMEOUT:5s}
+  namespace: ${SINGLEFLIGHT_NAMESPACE:demo}
+  distributed:
+    lease: 10s
+    result-ttl: 30s
+    poll-interval: 25ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}

@@ -1,0 +1,189 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Upstream calls / s (demo)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(sf_upstream_calls_total[1m])) or vector(0)",
+          "legendFormat": "upstream",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Leader starts / s",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(sf_leader_starts_total[1m])) or vector(0)",
+          "legendFormat": "leaders",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Waiter joins / s",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(sf_waiter_joins_total[1m])) or vector(0)",
+          "legendFormat": "waiters",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Upstream calls by mode",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (mode) (rate(sf_upstream_calls_total[1m]))",
+          "legendFormat": "{{mode}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Leaders vs waiters by mode",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (mode) (rate(sf_leader_starts_total[1m]))",
+          "legendFormat": "leader/{{mode}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (mode) (rate(sf_waiter_joins_total[1m]))",
+          "legendFormat": "waiter/{{mode}}",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Coalesce ratio (waiters / (leaders+waiters))",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (mode) (rate(sf_waiter_joins_total[1m])) / clamp_min(sum by (mode) (rate(sf_leader_starts_total[1m])) + sum by (mode) (rate(sf_waiter_joins_total[1m])), 0.001)",
+          "legendFormat": "{{mode}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Failover / timeouts / shared errors",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (mode) (rate(sf_leader_failover_total[1m])) or vector(0)",
+          "legendFormat": "failover/{{mode}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (mode) (rate(sf_waiter_timeouts_total[1m])) or vector(0)",
+          "legendFormat": "timeout/{{mode}}",
+          "refId": "B"
+        },
+        {
+          "expr": "sum by (mode) (rate(sf_shared_errors_total[1m])) or vector(0)",
+          "legendFormat": "shared_err/{{mode}}",
+          "refId": "C"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["singleflight"],
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Singleflight",
+  "uid": "singleflight",
+  "version": 1
+}

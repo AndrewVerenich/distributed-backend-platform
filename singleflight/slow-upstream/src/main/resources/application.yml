@@ -1,0 +1,18 @@
+server:
+  port: 8220
+
+spring:
+  application:
+    name: slow-upstream
+
+upstream:
+  delay-ms: ${UPSTREAM_DELAY_MS:100}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: slow-upstream

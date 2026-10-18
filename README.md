@@ -33,6 +33,7 @@ Capture), распределёнными транзакциями и други�
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
+23. [singleflight](#23-singleflight) — in-flight coalescing, local + Redis distributed, stampede protection across replicas
 
 ---
 
@@ -473,5 +474,23 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux)
 - Spring Data Redis (Reactive) + Lua
+- Micrometer / Prometheus / Grafana
+- Docker Compose / Gatling
+
+---
+
+### 23. [singleflight](./singleflight/README.md)
+In-flight coalescing по ключу: N одновременных запросов → один upstream call. Не TTL-кэш, а слияние пока запрос в полёте.
+
+**Описание:**
+- `singleflight-starter`: режимы `off` / `local` / `distributed` (Redis lease + result key).
+- Политики `share-errors` и `waiter-timeout`; failover при смерти leader.
+- Демо: 3×3 реплики за nginx, slow-upstream с call counter; Grafana сравнивает upstream calls по mode.
+- Gatling: hot-key burst, unique keys, error policy.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux)
+- Spring Data Redis (Reactive)
 - Micrometer / Prometheus / Grafana
 - Docker Compose / Gatling

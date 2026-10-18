@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: singleflight-demo
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - demo-off-1:8221
+          - demo-off-2:8221
+          - demo-off-3:8221
+          - demo-local-1:8221
+          - demo-local-2:8221
+          - demo-local-3:8221
+          - demo-distributed-1:8221
+          - demo-distributed-2:8221
+          - demo-distributed-3:8221
+          - slow-upstream:8220
+        labels:
+          system: singleflight
