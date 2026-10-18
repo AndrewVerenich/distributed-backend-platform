@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'choreography-services'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['travel-booking-api:8100']
+        labels:
+          application: 'travel-booking-api'
+      - targets: ['travel-flight-service:8102']
+        labels:
+          application: 'travel-flight-service'
+      - targets: ['travel-hotel-service:8103']
+        labels:
+          application: 'travel-hotel-service'
+      - targets: ['travel-car-service:8104']
+        labels:
+          application: 'travel-car-service'
+      - targets: ['saga-state-tracker:8101']
+        labels:
+          application: 'saga-state-tracker'

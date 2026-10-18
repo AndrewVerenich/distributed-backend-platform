@@ -1,0 +1,39 @@
+server:
+  port: 8101
+
+spring:
+  application:
+    name: saga-state-tracker
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/tracker
+    username: demo
+    password: demo
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: manual
+
+inbox:
+  consumer:
+    enabled: true
+    group-id: saga-state-tracker
+    topics: domain.booking-requested,domain.flight-booked,domain.flight-booking-failed,domain.flight-booking-cancelled,domain.hotel-booked,domain.hotel-booking-failed,domain.car-rented,domain.car-rental-failed,domain.booking-completed,domain.booking-compensated
+
+tracker:
+  hang-after-seconds: 30
+  hang-check-interval-ms: 10000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}

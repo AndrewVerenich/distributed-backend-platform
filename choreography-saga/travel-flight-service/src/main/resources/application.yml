@@ -1,0 +1,38 @@
+server:
+  port: 8102
+
+spring:
+  application:
+    name: travel-flight-service
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/flight
+    username: demo
+    password: demo
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: manual
+
+inbox:
+  consumer:
+    enabled: true
+    group-id: travel-flight-service
+    topics: domain.booking-requested,domain.hotel-booking-failed
+
+choreography:
+  failure-rate: 0.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}

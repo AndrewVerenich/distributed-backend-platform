@@ -33,6 +33,7 @@ Capture), распределёнными транзакциями и други�
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
+23. [choreography-saga](#23-choreography-saga) — choreography saga, transactional inbox, saga-state-tracker, контрапункт к saga-orchestrator
 
 ---
 
@@ -475,3 +476,23 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 - Spring Data Redis (Reactive) + Lua
 - Micrometer / Prometheus / Grafana
 - Docker Compose / Gatling
+
+---
+
+### 23. [choreography-saga](./choreography-saga/README.md)
+**Choreography Saga** без центрального оркестратора: сервисы реагируют на domain-события друг друга. Контрапункт к [saga-orchestrator](./saga-orchestrator/README.md).
+
+**Описание:**
+- Цепочка Travel Booking через события (`booking-requested` → `flight-booked` → `hotel-booked` → `car-rented`).
+- **Transactional inbox** — дедуп входящего события + бизнес + outbox в одной локальной TX (недостающая половина outbox).
+- Компенсации обратной цепочкой событий; hotel = pivot; car = post-pivot retryable.
+- **saga-state-tracker** — пассивный observer: projection по `bookingId`, hang detection (`STUCK`).
+- Переиспользование `outbox-publisher-starter` + Debezium EventRouter; отдельная PostgreSQL DB на сервис.
+
+**Стек:**
+- Kotlin / Java 21
+- Spring Boot 3 (WebFlux, R2DBC)
+- Spring Kafka / Debezium
+- PostgreSQL
+- Micrometer / Prometheus / Grafana
+- Docker Compose

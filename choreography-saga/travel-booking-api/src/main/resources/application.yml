@@ -1,0 +1,35 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: travel-booking-api
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/booking
+    username: demo
+    password: demo
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: manual
+
+inbox:
+  consumer:
+    enabled: true
+    group-id: travel-booking-api
+    topics: domain.car-rented,domain.flight-booking-failed,domain.flight-booking-cancelled
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}

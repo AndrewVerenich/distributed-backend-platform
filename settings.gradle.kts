@@ -99,4 +99,12 @@ include(
   "server-rate-limiter:rate-limiter-starter",
   "server-rate-limiter:demo-api-service",
   "server-rate-limiter:scripts:gatling",
+
+  "choreography-saga:choreography-model",
+  "choreography-saga:inbox-starter",
+  "choreography-saga:travel-booking-api",
+  "choreography-saga:travel-flight-service",
+  "choreography-saga:travel-hotel-service",
+  "choreography-saga:travel-car-service",
+  "choreography-saga:saga-state-tracker",
 )
