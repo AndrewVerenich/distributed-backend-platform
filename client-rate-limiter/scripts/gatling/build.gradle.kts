@@ -7,7 +7,7 @@ repositories {
   mavenCentral()
 }
 
-java {
+configure<JavaPluginExtension> {
   toolchain {
     languageVersion.set(JavaLanguageVersion.of(21))
   }
