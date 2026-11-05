@@ -33,7 +33,7 @@ Capture), распределёнными транзакциями и други�
 20. [fifo-waiting-room](#20-fifo-waiting-room) — FIFO virtual waiting room, opaque Redis ticket, admission rate
 21. [geo-nearest-matching](#21-geo-nearest-matching) — Redis GEO как производный индекс, atomic claim в PostgreSQL
 22. [server-rate-limiter](#22-server-rate-limiter) — серверный Redis rate limiter, fixed / sliding / token bucket, app-level sharding, Gatling, Grafana
-23. [client-rate-limiter](#23-client-rate-limiter) — клиентский WebClient rate limiter, Redis token bucket, RateLimit-* retry, Grafana
+23. [client-rate-limiter](#23-client-rate-limiter) — клиентский WebClient rate limiter, Redis token bucket, RateLimit-* retry, Gatling, Grafana
 
 ---
 
@@ -485,11 +485,11 @@ Per-key rate limit на входе: алгоритм, лимиты и прави
 **Описание:**
 - `client-rate-limiter-starter`: yaml-правила, общий budget на реплики, cooldown после 429, fail-fast без заголовков.
 - Демо: mock upstream с квотными заголовками; smart (header-aware) vs dumb (fixed 50 ms retry).
-- Grafana: wait seconds, recovered vs fail-fast, smart vs dumb outcomes.
+- Gatling: SmartVsDumb / CheckoutBurst / CatalogSteady. Grafana: wait seconds, recovered vs fail-fast, smart vs dumb.
 
 **Стек:**
 - Kotlin / Java 21
 - Spring Boot 3 (WebFlux)
 - Spring Data Redis (Reactive) + Lua
 - Micrometer / Prometheus / Grafana
-- Docker Compose
+- Docker Compose / Gatling

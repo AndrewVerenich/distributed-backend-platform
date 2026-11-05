@@ -93,6 +93,7 @@ client-rate-limiter:
 | `demo-upstream` | mock API: fixed window + `RateLimit-*` / `X-*` / `Retry-After` |
 | `demo-client-smart` | starter ON, `/proxy/*`, `/load/*` |
 | `demo-client-dumb` | fixed 50 ms retry, без чтения заголовков |
+| `scripts/gatling` | smart vs dumb нагрузка на `/proxy/*` |
 
 ## Стек
 
@@ -133,23 +134,41 @@ docker compose up --build -d
 | Prometheus | http://localhost:9098 |
 | Grafana | http://localhost:3006 (admin/admin) |
 
-### Сравнение нагрузки
+### Сравнение нагрузки (Gatling)
+
+Отдельный модуль [`scripts/gatling`](./scripts/gatling). Gatling бьёт в `/proxy/*` демо-клиентов (каждый virtual user = один исходящий вызов через smart/dumb).
 
 ```bash
-# smart: header-aware delay + Redis bucket
-curl -X POST 'http://localhost:8221/load/checkout?requests=60&concurrency=20'
+# smart vs dumb на checkout (лимит upstream 5/s) — основной сценарий для Grafana
+./gradlew :client-rate-limiter:scripts:gatling:gatlingRun \
+  --simulation=com.andver.clientratelimit.gatling.SmartVsDumbSimulation \
+  --non-interactive \
+  -DDURATION_SECONDS=20 -DRPS=40
 
-# dumb: fixed 50ms retry, заголовки игнорирует
-curl -X POST 'http://localhost:8222/load/checkout?requests=60&concurrency=20'
+# burst: N одновременных checkout на оба клиента
+./gradlew :client-rate-limiter:scripts:gatling:gatlingRun \
+  --simulation=com.andver.clientratelimit.gatling.CheckoutBurstSimulation \
+  --non-interactive \
+  -DBURST_USERS=60
+
+# steady catalog (upstream 20/s)
+./gradlew :client-rate-limiter:scripts:gatling:gatlingRun \
+  --simulation=com.andver.clientratelimit.gatling.CatalogSteadySimulation \
+  --non-interactive \
+  -DDURATION_SECONDS=20 -DRPS=40
 ```
 
-Ожидание: у smart выше доля `ok`/`recovered`, меньше бесполезных 429 после retry; у dumb — много `naiveRetries` и `limited`. В Grafana дашборд **client-rate-limiter**.
+Свойства: `SMART_URL`, `DUMB_URL`, `DURATION_SECONDS`, `RPS`, `BURST_USERS`.  
+Отчёт: `client-rate-limiter/scripts/gatling/build/reports/gatling/`. В отчёте и 200, и 429 — успешный HTTP-ответ демо; разницу смотрите в Grafana (**client-rate-limiter**).
 
-Одиночный вызов:
+![Grafana Dashboard](./docs/grafana.png)
+
+Быстрый ручной прогон без Gatling:
 
 ```bash
+curl -X POST 'http://localhost:8221/load/checkout?requests=60&concurrency=20'
+curl -X POST 'http://localhost:8222/load/checkout?requests=60&concurrency=20'
 curl -s http://localhost:8221/proxy/checkout | jq
-curl -s http://localhost:8222/proxy/checkout | jq
 ```
 
 ## Out of scope

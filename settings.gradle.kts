@@ -104,4 +104,5 @@ include(
   "client-rate-limiter:demo-upstream",
   "client-rate-limiter:demo-client-smart",
   "client-rate-limiter:demo-client-dumb",
+  "client-rate-limiter:scripts:gatling",
 )

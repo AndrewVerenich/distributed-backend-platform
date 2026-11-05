@@ -8,7 +8,9 @@ import com.andver.clientratelimit.headers.RateLimitHeaderParser
 import com.andver.clientratelimit.metrics.ClientRateLimitMetrics
 import com.andver.clientratelimit.rules.ClientRateLimitRuleSet
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
+import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
@@ -37,11 +39,12 @@ class WebClientClientRateLimitFilter(
         metrics.redisError(rule.name)
         error
       }
-      .onErrorResume(ClientBudgetExceededException::class.java) { error ->
-        metrics.budgetExceeded(rule.name)
-        Mono.error(error)
-      }
       .then(Mono.defer { exchangeOnce(request, next, rule.name, isRetry = false) })
+      .onErrorResume(ClientBudgetExceededException::class.java) { error ->
+        metrics.budgetExceeded(error.rule)
+        log.info("client budget exceeded rule={} -> 429", error.rule)
+        Mono.just(budgetExceededResponse(error.rule))
+      }
   }
 
   private fun exchangeOnce(
@@ -109,11 +112,11 @@ class WebClientClientRateLimitFilter(
 
     return delay
       .then(budget.acquire(rule))
-      .onErrorResume(ClientBudgetExceededException::class.java) { error ->
-        metrics.budgetExceeded(rule.name)
-        Mono.error(error)
-      }
       .then(Mono.defer { exchangeOnce(request, next, ruleName, isRetry = true) })
+      .onErrorResume(ClientBudgetExceededException::class.java) { error ->
+        metrics.budgetExceeded(error.rule)
+        Mono.just(budgetExceededResponse(error.rule))
+      }
   }
 
   private fun clamp(wait: Duration): Duration {
@@ -124,6 +127,12 @@ class WebClientClientRateLimitFilter(
       else -> wait
     }
   }
+
+  private fun budgetExceededResponse(ruleName: String): ClientResponse =
+    ClientResponse.create(HttpStatus.TOO_MANY_REQUESTS)
+      .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+      .body("""{"error":"client rate budget exceeded","rule":"$ruleName"}""")
+      .build()
 
   private fun isTooManyRequests(status: HttpStatusCode): Boolean = status.value() == 429
 }
