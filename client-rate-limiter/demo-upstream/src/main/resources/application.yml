@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8220}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:demo-upstream}
+
+upstream-rate-limit:
+  rules:
+    - name: catalog
+      path-prefixes: [/api/catalog]
+      limit: 20
+      window: 1s
+    - name: checkout
+      path-prefixes: [/api/checkout]
+      limit: 5
+      window: 1s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${SPRING_APPLICATION_NAME:demo-upstream}

@@ -1,0 +1,21 @@
+server:
+  port: ${SERVER_PORT:8222}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:demo-client-dumb}
+
+upstream:
+  base-url: ${UPSTREAM_BASE_URL:http://localhost:8220}
+
+dumb-retry:
+  fixed-delay: 50ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${SPRING_APPLICATION_NAME:demo-client-dumb}

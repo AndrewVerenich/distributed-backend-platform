@@ -1,0 +1,41 @@
+server:
+  port: ${SERVER_PORT:8221}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:demo-client-smart}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6384}
+
+upstream:
+  base-url: ${UPSTREAM_BASE_URL:http://localhost:8220}
+
+client-rate-limiter:
+  enabled: true
+  key-prefix: crl
+  max-wait: 30s
+  rules:
+    - name: catalog
+      path-prefixes: [/api/catalog]
+      limit: 20
+      window: 1s
+      burst: 20
+    - name: checkout
+      path-prefixes: [/api/checkout]
+      limit: 5
+      window: 1s
+      burst: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${SPRING_APPLICATION_NAME:demo-client-smart}
+    distribution:
+      percentiles-histogram:
+        crl_wait_seconds: true
